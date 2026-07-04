@@ -2,11 +2,12 @@
 Authentication routes for OpenEdu Git.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Optional
+import secrets
 
 from app.core.config import settings
 from app.core.security import (
@@ -15,15 +16,22 @@ from app.core.security import (
     create_access_token,
     create_refresh_token
 )
+from app.core.email import send_verification_email
 from app.schemas.user import UserCreate, User
+from app.schemas.verification_token import VerificationTokenCreate
 from app.models.user import User as UserModel
+from app.models.verification_token import VerificationToken
 from app.db.session import get_db
 
 router = APIRouter()
 
 
 @router.post("/register", response_model=User)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+def register_user(
+    user: UserCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
     """Register a new user."""
     # Check if email already exists
     db_user = db.query(UserModel).filter(UserModel.email == user.email).first()
@@ -49,7 +57,54 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(db_user)
     
+    # Create verification token
+    token = secrets.token_urlsafe(32)
+    expires_at = datetime.utcnow() + timedelta(hours=24)
+    
+    db_token = VerificationToken(
+        user_id=db_user.id,
+        token=token,
+        purpose="email_verification",
+        expires_at=expires_at
+    )
+    db.add(db_token)
+    db.commit()
+    
+    # Send verification email in background
+    background_tasks.add_task(send_verification_email, db_user.email, token)
+    
     return db_user
+
+
+@router.get("/verify-email")
+def verify_email(token: str, db: Session = Depends(get_db)):
+    """Verify a user's email."""
+    # Check token exists and is valid
+    db_token = db.query(VerificationToken).filter(
+        VerificationToken.token == token,
+        VerificationToken.purpose == "email_verification",
+        VerificationToken.expires_at > datetime.utcnow()
+    ).first()
+    
+    if not db_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired token"
+        )
+    
+    # Update user
+    db_user = db.query(UserModel).filter(UserModel.id == db_token.user_id).first()
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    db_user.is_verified = True
+    db.delete(db_token)
+    db.commit()
+    
+    return {"message": "Email verified successfully"}
 
 
 @router.post("/login")
@@ -67,11 +122,16 @@ def login_user(
             headers={"WWW-Authenticate": "Bearer"}
         )
     
-    # Check if user is active
+    # Check if user is active and verified
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Inactive user"
+        )
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified"
         )
     
     # Create tokens
@@ -116,3 +176,9 @@ def refresh_token(refresh_token: str):
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+
+def decode_token(token: str) -> Optional[dict]:
+    """Decode a JWT token."""
+    from app.core.security import decode_token as security_decode_token
+    return security_decode_token(token)
