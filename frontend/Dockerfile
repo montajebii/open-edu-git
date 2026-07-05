@@ -11,11 +11,8 @@ RUN npm install --frozen-lockfile
 # Copy project files
 COPY . .
 
-# Build the application
-RUN npm run build
-
 # Expose port
 EXPOSE 3000
 
-# Command to run the application
-CMD ["npm", "start"]
+# Command to run the application with hot-reload
+CMD ["npm", "run", "dev"]

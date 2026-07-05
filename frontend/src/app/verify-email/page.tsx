@@ -9,8 +9,8 @@ export default function VerifyEmailPage({
 }: {
   searchParams: { token?: string }
 }) {
-  const [message, setMessage] = useState("در حال تأیید ایمیل...")
-  const [error, setError] = useState("")
+  const [message, setMessage] = useState("در حال تأیید ایمیل...");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -22,7 +22,7 @@ export default function VerifyEmailPage({
     const verifyEmail = async () => {
       try {
         const response = await fetch(
-          `http://localhost:8000/api/v1/auth/verify-email?token=${searchParams.token}`
+          `http://backend:8000/api/v1/auth/verify-email?token=${searchParams.token}`
         );
         
         if (!response.ok) {
@@ -42,21 +42,21 @@ export default function VerifyEmailPage({
 
   return (
     <main className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-md text-center">
+      <div className="w-full max-w-md card text-center">
         {error ? (
           <>
-            <h1 className="text-3xl font-bold mb-6 text-red-600">خطا</h1>
+            <h1 className="text-red-600">خطا</h1>
             <p className="mb-8">{error}</p>
             <a
               href="/register"
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="button"
             >
               ارسال مجدد ایمیل تأیید
             </a>
           </>
         ) : (
           <>
-            <h1 className="text-3xl font-bold mb-6">تأیید ایمیل</h1>
+            <h1>تأیید ایمیل</h1>
             <p className="mb-8">{message}</p>
           </>
         )}

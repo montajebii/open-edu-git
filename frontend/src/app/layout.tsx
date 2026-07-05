@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { Vazirmatn } from "next/font/google";
-import "./styles/globals.css";
-
-const vazirmatn = Vazirmatn({ subsets: ["arabic"] });
+import "@/styles/globals.css";
 
 export const metadata: Metadata = {
   title: "OpenEdu Git",
@@ -16,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fa" dir="rtl">
-      <body className={vazirmatn.className}>
+      <body>
         {children}
       </body>
     </html>

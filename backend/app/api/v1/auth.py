@@ -51,27 +51,11 @@ def register_user(
         full_name=user.full_name,
         title=user.title,
         bio=user.bio,
-        is_verified=False  # Email verification required
+        is_verified=1  # Bypass email verification for testing
     )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
-    # Create verification token
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.utcnow() + timedelta(hours=24)
-    
-    db_token = VerificationToken(
-        user_id=db_user.id,
-        token=token,
-        purpose="email_verification",
-        expires_at=expires_at
-    )
-    db.add(db_token)
-    db.commit()
-    
-    # Send verification email in background
-    background_tasks.add_task(send_verification_email, db_user.email, token)
     
     return db_user
 
