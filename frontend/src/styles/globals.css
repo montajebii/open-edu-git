@@ -1,3 +1,5 @@
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,7 +25,7 @@
     background-color: white;
     color: black;
     direction: rtl;
-    font-family: 'Vazirmatn', monospace;
+    font-family: 'Vazirmatn', sans-serif;
     font-size: 1.5rem;
     line-height: 1.6;
   }
@@ -39,6 +41,7 @@
     border-bottom: 8px solid #000000;
     padding-bottom: 1rem;
     margin-bottom: 2rem;
+    font-family: 'Vazirmatn', sans-serif;
   }
   
   .dark h1 {
@@ -51,6 +54,7 @@
     border-bottom: 4px solid #000000;
     padding-bottom: 0.5rem;
     margin-bottom: 1.5rem;
+    font-family: 'Vazirmatn', sans-serif;
   }
   
   .dark h2 {
@@ -61,6 +65,7 @@
     font-size: 2rem;
     font-weight: bold;
     margin-bottom: 1rem;
+    font-family: 'Vazirmatn', sans-serif;
   }
   
   a {
@@ -79,6 +84,7 @@
     padding: 1rem 2rem;
     font-weight: bold;
     font-size: 1.5rem;
+    font-family: 'Vazirmatn', sans-serif;
   }
   
   button:hover {
@@ -100,6 +106,7 @@
     padding: 1rem;
     width: 100%;
     font-size: 1.5rem;
+    font-family: 'Vazirmatn', sans-serif;
   }
   
   .dark input, .dark textarea {

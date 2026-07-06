@@ -4,6 +4,7 @@ Pamphlet endpoints for OpenEdu Git.
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List
 import os
 import uuid

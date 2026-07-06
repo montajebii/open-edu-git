@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenEdu Git – جزوه‌های زنده ایران</title>
+  <meta name="description" content="بستر مشارکتی معلمان برای آپلود، بهبود و اشتراک‌گذاری جزوات درسی رایگان و آزاد">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brutal-red: #ff4d4d;
+      --brutal-black: #000;
+      --brutal-white: #fff;
+      --brutal-gray: #333;
+      --brutal-yellow: #ffd700;
+      --brutal-shadow: 8px 8px 0 0 var(--brutal-black);
+      --brutal-border: 4px solid var(--brutal-black);
+      --brutal-font: "Courier New", monospace, "Noto Sans Arabic", "Noto Sans Persian", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Vazirmatn', sans-serif;
+      background-color: var(--brutal-white);
+      color: var(--brutal-black);
+      line-height: 1.6;
+      padding: 2rem;
+      direction: rtl;
+      text-align: right;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      border: var(--brutal-border);
+      box-shadow: var(--brutal-shadow);
+      background: var(--brutal-white);
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: var(--brutal-border);
+    }
+
+    .logo {
+      font-size: 1.8rem;
+      font-weight: 900;
+      color: var(--brutal-black);
+      text-decoration: none;
+      border: var(--brutal-border);
+      padding: .5rem 1rem;
+      background: var(--brutal-yellow);
+      box-shadow: var(--brutal-shadow);
+    }
+
+    nav a {
+      margin-left: 1.5rem;
+      text-decoration: none;
+      color: var(--brutal-black);
+      font-weight: 700;
+      border: var(--brutal-border);
+      padding: .3rem .8rem;
+      background: var(--brutal-yellow);
+      box-shadow: var(--brutal-shadow);
+    }
+
+    nav a:hover {
+      background: var(--brutal-red);
+      color: var(--brutal-white);
+    }
+
+    .hero {
+      text-align: center;
+      margin: 3rem 0;
+    }
+
+    .hero h1 {
+      font-size: 3.5rem;
+      margin-bottom: 1rem;
+      color: var(--brutal-black);
+      border: var(--brutal-border);
+      padding: 1rem;
+      background: var(--brutal-yellow);
+      box-shadow: var(--brutal-shadow);
+      display: inline-block;
+    }
+
+    .hero p {
+      font-size: 1.3rem;
+      margin-bottom: 2rem;
+      color: var(--brutal-gray);
+    }
+
+    .cta {
+      margin: 3rem 0;
+      text-align: center;
+    }
+
+    .cta a {
+      display: inline-block;
+      font-size: 1.4rem;
+      font-weight: 900;
+      color: var(--brutal-white);
+      background: var(--brutal-black);
+      padding: 1rem 2rem;
+      border: var(--brutal-border);
+      box-shadow: var(--brutal-shadow);
+      text-decoration: none;
+      transition: background .2s;
+    }
+
+    .cta a:hover {
+      background: var(--brutal-red);
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .feature {
+      border: var(--brutal-border);
+      padding: 1.5rem;
+      background: var(--brutal-white);
+      box-shadow: var(--brutal-shadow);
+    }
+
+    .feature h3 {
+      font-size: 1.4rem;
+      margin-bottom: .8rem;
+      color: var(--brutal-black);
+    }
+
+    .feature p {
+      color: var(--brutal-gray);
+    }
+
+    footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: var(--brutal-border);
+      text-align: center;
+      color: var(--brutal-gray);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem; }
+      .page { padding: 1rem; }
+      .hero h1 { font-size: 2.2rem; }
+      .hero p { font-size: 1.1rem; }
+      .cta a { font-size: 1.1rem; padding: .8rem 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <header>
+      <a href="/" class="logo">OpenEdu Git</a>
+      <nav>
+        <a href="/pamphlets">کتابخانه</a>
+        <a href="/login">ورود</a>
+        <a href="/register">ثبت‌نام</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <h1>جزوه‌های زنده ایران</h1>
+        <p>بستر مشارکتی معلمان برای آپلود، بهبود و اشتراک‌گذاری جزوات درسی رایگان و آزاد</p>
+      </section>
+
+      <section class="cta">
+        <a href="/pamphlets/upload">آپلود جزوه خودت</a>
+      </section>
+
+      <section class="features">
+        <article class="feature">
+          <h3>آپلود هر نوع فایل</h3>
+          <p>PDF، تصاویر، ZIP حاوی markdown و منابع را آپلود کن. نسخه‌های ویرایش‌پذیر و غیر‌ویرایش‌پذیر هر دو پشتیبانی می‌شوند.</p>
+        </article>
+
+        <article class="feature">
+          <h3>ویرایش زنده</h3>
+          <p>اگر جزوه قابل ویرایش باشد، مستقیم در صفحه ویرایش کن و تغییراتت را ذخیره کن. تاریخچه نسخه‌ها حفظ می‌شود.</p>
+        </article>
+
+        <article class="feature">
+          <h3>کپی و بهبود (Fork)</h3>
+          <p>هر معلم می‌تواند جزوه دیگران را کپی بگیرد، بهبود بدهد و تغییراتش را به‌عنوان پیشنهاد ادغام (PR) بفرستد.</p>
+        </article>
+
+        <article class="feature">
+          <h3>امتیازدهی و ستاره</h3>
+          <p>جزوات با ستاره و نظر جامعه رتبه‌بندی می‌شوند. بهترین‌ها در صدر لیست قرار می‌گیرند.</p>
+        </article>
+
+        <article class="feature">
+          <h3>جستجوی پیشرفته</h3>
+          <p>جستجوی تمام‌متن روی عنوان، درس، فصل و تگ‌ها با پشتیبانی کامل از زبان فارسی.</p>
+        </article>
+
+        <article class="feature">
+          <h3>رایگان و آزاد</h3>
+          <p>همه محتوا تحت مجوز CC BY-SA 4.0 منتشر می‌شود. کد پلتفرم هم تحت AGPLv3 است.</p>
+        </article>
+      </section>
+
+      <section class="cta">
+        <a href="/pamphlets">مشاهده کتابخانه جزوات</a>
+      </section>
+    </main>
+
+    <footer>
+      <p>© 2026 OpenEdu Git – ساخته‌شده با عشق برای آموزش ایران</p>
+      <p>مجوز محتوا: CC BY-SA 4.0 | مجوز کد: AGPLv3</p>
+    </footer>
+  </div>
+
+</body>
+</html>
