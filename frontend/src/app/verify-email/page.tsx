@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-
 export default function VerifyEmailPage({
   searchParams,
 }: {
@@ -15,28 +14,29 @@ export default function VerifyEmailPage({
 
   useEffect(() => {
     if (!searchParams.token) {
-      setError("توکن تأیید یافت نشد.");
+      // Use a timeout to avoid synchronous setState in effect
+      setTimeout(() => setError("توکن تأیید یافت نشد."), 0);
       return;
     }
-    
+
     const verifyEmail = async () => {
       try {
         const response = await fetch(
           `http://backend:8000/api/v1/auth/verify-email?token=${searchParams.token}`
         );
-        
+
         if (!response.ok) {
           const data = await response.json();
           throw new Error(data.detail || "تأیید ایمیل ناموفق بود.");
         }
-        
+
         setMessage("ایمیل شما با موفقیت تأیید شد!");
         setTimeout(() => router.push("/login"), 3000);
       } catch (err) {
         setError(err instanceof Error ? err.message : "تأیید ایمیل ناموفق بود.");
       }
     };
-    
+
     verifyEmail();
   }, [searchParams.token, router]);
 

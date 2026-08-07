@@ -3,26 +3,37 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+interface TokenPayload {
+  sub: string;
+  exp: number;
+  iat: number;
+  [key: string]: unknown;
+}
 
 export const useAuth = () => {
   const [token, setToken] = useState<string | null>(null);
-  const [tokenPayload, setTokenPayload] = useState<any>(null);
+  const [tokenPayload, setTokenPayload] = useState<TokenPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("access_token");
-    setToken(accessToken);
-    
-    if (accessToken) {
-      try {
-        const payload = JSON.parse(atob(accessToken.split('.')[1]));
-        setTokenPayload(payload);
-      } catch {
-        setTokenPayload(null);
+    // Use a timeout to avoid synchronous setState in effect
+    const initAuth = () => {
+      const accessToken = localStorage.getItem("access_token");
+      setToken(accessToken);
+
+      if (accessToken) {
+        try {
+          const payload = JSON.parse(atob(accessToken.split('.')[1])) as TokenPayload;
+          setTokenPayload(payload);
+        } catch {
+          setTokenPayload(null);
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    setTimeout(initAuth, 0);
   }, []);
 
   const login = (accessToken: string, refreshToken: string) => {
@@ -30,7 +41,7 @@ export const useAuth = () => {
     localStorage.setItem("refresh_token", refreshToken);
     setToken(accessToken);
     try {
-      const payload = JSON.parse(atob(accessToken.split('.')[1]));
+      const payload = JSON.parse(atob(accessToken.split('.')[1])) as TokenPayload;
       setTokenPayload(payload);
     } catch {
       setTokenPayload(null);

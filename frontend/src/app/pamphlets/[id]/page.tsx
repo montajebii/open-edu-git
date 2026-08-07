@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
@@ -44,7 +43,6 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   const [reviewError, setReviewError] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const { token, tokenPayload } = useAuth();
-  const router = useRouter();
 
   useEffect(() => {
     const fetchPamphlet = async () => {
