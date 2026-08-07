@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 
 export default function LoginPage() {
@@ -47,40 +46,43 @@ export default function LoginPage() {
 
   return (
     <main className="min-h-screen flex items-center justify-center p-8">
-      <div className="w-full max-w-md">
-        <h1 className="text-3xl font-bold mb-6 text-center">ورود</h1>
-        {error && <div className="mb-4 p-3 bg-red-100 text-red-700 rounded">{error}</div>}
+      <div className="w-full max-w-md card">
+        <h1>ورود</h1>
+        {error && <div className="error">{error}</div>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block mb-1">ایمیل</label>
+            <label htmlFor="email">ایمیل</label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block mb-1">رمز عبور</label>
+            <label htmlFor="password">رمز عبور</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               required
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50"
           >
             {loading ? "در حال ورود..." : "ورود"}
           </button>
         </form>
-        <div className="mt-6 text-center">
+        <div className="mt-6">
           <p>
-            حساب کاربری ندارید؟{
+            حساب کاربری ندارید؟ <a href="/register" className="text-blue-600 underline">ثبت‌نام کنید</a>
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+}

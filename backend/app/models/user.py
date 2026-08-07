@@ -22,4 +22,4 @@ class User(Base):
     is_active = Column(Integer, default=1)  # 1 = active, 0 = inactive
     is_verified = Column(Integer, default=0)  # 1 = verified, 0 = not verified
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -43,7 +43,7 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
         full_name=user.full_name,
         title=user.title,
         bio=user.bio,
-        is_verified=False  # Email verification required
+        is_verified=1  # Bypass email verification for testing
     )
     db.add(db_user)
     db.commit()

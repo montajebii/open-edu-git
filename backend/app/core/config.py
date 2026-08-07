@@ -7,7 +7,7 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://openedu:openedu@db:5432/openedu_db"
+    DATABASE_URL: str = "postgresql://${POSTGRES_USER:-openedu}:${POSTGRES_PASSWORD:-openedu}@db:5432/${POSTGRES_DB:-openedu_db}"
     
     # MinIO
     MINIO_ENDPOINT: str = "minio:9000"
@@ -24,7 +24,11 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
     # CORS
-    CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
+    CORS_ORIGINS: list = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:8000",
+    ]
     
     # Email (for verification)
     SMTP_SERVER: str = "smtp.example.com"

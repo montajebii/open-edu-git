@@ -30,6 +30,18 @@ def main():
         secret_key=MINIO_SECRET_KEY,
         secure=MINIO_SECURE
     )
+    
+    # Wait for MinIO to be ready
+    import time
+    for _ in range(10):
+        try:
+            client.list_buckets()
+            break
+        except Exception as e:
+            print(f"⏳ Waiting for MinIO... ({e})")
+            time.sleep(3)
+    else:
+        raise Exception("MinIO not ready after 30 seconds")
 
     # Create buckets
     for bucket in BUCKETS:

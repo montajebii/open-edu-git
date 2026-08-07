@@ -18,15 +18,20 @@ app = FastAPI(
 )
 
 # Set up CORS
+origins = settings.CORS_ORIGINS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["*"],  # Expose all headers for frontend
 )
 
 # Include API routers
+from app.api.v1.endpoints import pamphlet, review
+api_router.include_router(pamphlet.router, prefix="/pamphlets", tags=["pamphlets"])
+api_router.include_router(review.router, prefix="/reviews", tags=["reviews"])
 app.include_router(api_router, prefix="/api/v1")
 
 
