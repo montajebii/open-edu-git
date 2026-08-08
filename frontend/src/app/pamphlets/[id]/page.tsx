@@ -125,7 +125,12 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   if (error) return <div className="container mx-auto px-4 py-8 text-red-600">{error}</div>;
   if (!pamphlet) return <div className="container mx-auto px-4 py-8">Pamphlet not found</div>;
 
-  const hasReviewed = reviews.some((review) => review.user.id === tokenPayload?.sub);
+  const currentUserId = tokenPayload?.sub ?? null;
+  const hasReviewed =
+    currentUserId !== null &&
+    typeof currentUserId === "string" &&
+    reviews.some((review) => typeof review.user?.id === "string" && review.user.id === currentUserId);
+
   const averageRating = reviews.length
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
     : "No reviews yet";
@@ -152,14 +157,6 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
         </div>
         <p className="text-gray-600 mb-4"><strong>Author:</strong> {pamphlet.author.full_name}</p>
         <p className="text-gray-600 mb-4"><strong>Average Rating:</strong> {averageRating}</p>
-        <a
-          href={`http://localhost:9000/${pamphlet.versions?.[0]?.file_path}`}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 inline-block"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Download Pamphlet
-        </a>
       </div>
 
       {/* Reviews Section */}
@@ -175,7 +172,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
                   <div>
                     <p className="font-medium">{review.user.full_name}</p>
                     <p className="text-yellow-500">
-                      {'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}
+                      {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
                     </p>
                   </div>
                   <p className="text-sm text-gray-500">{new Date(review.created_at).toLocaleDateString()}</p>
