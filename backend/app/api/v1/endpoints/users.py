@@ -2,15 +2,14 @@
 User endpoints for OpenEdu Git API v1.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
-from uuid import UUID
 
 from ....db.session import get_db
 from ....schemas.user import User, UserCreate, UserUpdate
 from ....services.user import UserService
-
 
 router = APIRouter()
 

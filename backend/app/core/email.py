@@ -3,8 +3,9 @@ Email utilities for OpenEdu Git.
 """
 
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 from app.core.config import settings
 
 
@@ -17,13 +18,13 @@ def send_email(to: str, subject: str, body: str) -> bool:
         msg["To"] = to
         msg["Subject"] = subject
         msg.attach(MIMEText(body, "html"))
-        
+
         # Connect to SMTP server
         with smtplib.SMTP(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
             server.starttls()
             server.login(settings.SMTP_USERNAME, settings.SMTP_PASSWORD)
             server.send_message(msg)
-        
+
         return True
     except Exception as e:
         print(f"❌ Error sending email: {e}")

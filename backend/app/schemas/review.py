@@ -2,14 +2,14 @@
 Pydantic schemas for reviews.
 """
 
-from pydantic import BaseModel
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class ReviewBase(BaseModel):
     rating: int
-    comment: Optional[str] = None
+    comment: str | None = None
 
 
 class ReviewCreate(ReviewBase):

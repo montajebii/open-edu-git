@@ -3,6 +3,7 @@ API v1 routers for OpenEdu Git.
 """
 
 from fastapi import APIRouter
+
 from app.api.v1 import auth, pamphlet
 
 api_router = APIRouter()

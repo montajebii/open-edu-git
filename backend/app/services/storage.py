@@ -3,10 +3,10 @@ Storage service for MinIO (S3-compatible) file storage.
 """
 
 from io import BytesIO
-from typing import Optional
+from uuid import uuid4
+
 from minio import Minio
 from minio.error import S3Error
-from uuid import uuid4
 
 from ..core.config import settings
 
@@ -47,7 +47,7 @@ class StorageService:
         )
         return object_name
 
-    def download_file(self, bucket_name: str, object_name: str) -> Optional[BytesIO]:
+    def download_file(self, bucket_name: str, object_name: str) -> BytesIO | None:
         """Download a file from MinIO."""
         try:
             data = BytesIO()
@@ -61,9 +61,7 @@ class StorageService:
         self, bucket_name: str, object_name: str, expires: int = 3600
     ) -> str:
         """Generate a presigned URL for temporary access."""
-        return self.client.presigned_get_object(
-            bucket_name, object_name, expires=expires
-        )
+        return self.client.presigned_get_object(bucket_name, object_name, expires=expires)
 
     def delete_file(self, bucket_name: str, object_name: str) -> bool:
         """Delete a file from MinIO."""

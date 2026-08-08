@@ -2,8 +2,9 @@
 Pydantic schemas for VerificationToken model.
 """
 
-from pydantic import BaseModel
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class VerificationTokenBase(BaseModel):
@@ -20,6 +21,6 @@ class VerificationTokenCreate(VerificationTokenBase):
 class VerificationToken(VerificationTokenBase):
     id: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True

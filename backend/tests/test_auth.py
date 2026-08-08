@@ -6,23 +6,18 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from uuid import uuid4
 
-from app.main import app
 from app.db.base import Base
 from app.db.session import get_db
-from app.core.config import settings
-from app.services.user import UserService
+from app.main import app
 from app.schemas.user import UserCreate
-
+from app.services.user import UserService
 
 # Use a test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 
 # Create test engine
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
-)
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
@@ -33,6 +28,7 @@ def override_get_db():
         yield db
     finally:
         db.close()
+
 
 app.dependency_overrides[get_db] = override_get_db
 
@@ -98,7 +94,7 @@ def test_get_current_user(test_user):
         },
     )
     assert login_response.status_code == 200
-    
+
     # Then get current user
     response = client.get(
         "/api/v1/auth/me",
@@ -119,7 +115,7 @@ def test_logout_user(test_user):
         },
     )
     assert login_response.status_code == 200
-    
+
     # Then logout
     response = client.post(
         "/api/v1/auth/logout",

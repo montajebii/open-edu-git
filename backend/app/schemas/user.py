@@ -2,16 +2,16 @@
 Pydantic schemas for User model.
 """
 
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, EmailStr
 
 
 class UserBase(BaseModel):
     email: EmailStr
     full_name: str
-    title: Optional[str] = None
-    bio: Optional[str] = None
+    title: str | None = None
+    bio: str | None = None
 
 
 class UserCreate(UserBase):
@@ -19,10 +19,10 @@ class UserCreate(UserBase):
 
 
 class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
-    title: Optional[str] = None
-    bio: Optional[str] = None
-    password: Optional[str] = None
+    full_name: str | None = None
+    title: str | None = None
+    bio: str | None = None
+    password: str | None = None
 
 
 class UserInDBBase(UserBase):
@@ -31,7 +31,7 @@ class UserInDBBase(UserBase):
     is_verified: bool
     created_at: datetime
     updated_at: datetime
-    
+
     class Config:
         from_attributes = True
 

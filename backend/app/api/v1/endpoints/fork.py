@@ -3,7 +3,6 @@ Pamphlet fork and merge request endpoints.
 """
 
 from datetime import datetime
-from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -12,9 +11,17 @@ from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.pamphlet import (
     MergeRequest as MergeRequestModel,
+)
+from app.models.pamphlet import (
     MergeRequestStatus,
+)
+from app.models.pamphlet import (
     Pamphlet as PamphletModel,
+)
+from app.models.pamphlet import (
     PamphletFork as PamphletForkModel,
+)
+from app.models.pamphlet import (
     PamphletVersion as PamphletVersionModel,
 )
 from app.models.user import User as UserModel
@@ -28,7 +35,7 @@ from app.schemas.pamphlet import (
 router = APIRouter()
 
 
-def _latest_version(db: Session, pamphlet_id: int) -> Optional[PamphletVersionModel]:
+def _latest_version(db: Session, pamphlet_id: int) -> PamphletVersionModel | None:
     return (
         db.query(PamphletVersionModel)
         .filter(PamphletVersionModel.pamphlet_id == pamphlet_id)
@@ -58,7 +65,11 @@ def _create_version_from_existing(
     return version
 
 
-@router.post("/pamphlets/{pamphlet_id}/fork", response_model=PamphletFork, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/pamphlets/{pamphlet_id}/fork",
+    response_model=PamphletFork,
+    status_code=status.HTTP_201_CREATED,
+)
 def fork_pamphlet(
     pamphlet_id: int,
     db: Session = Depends(get_db),
@@ -75,7 +86,9 @@ def fork_pamphlet(
 
     latest_version = _latest_version(db, original.id)
     if latest_version is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Pamphlet has no versions")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Pamphlet has no versions"
+        )
 
     forked_pamphlet = PamphletModel(
         title=f"{original.title} (fork)",
@@ -117,11 +130,16 @@ def create_merge_request(
 ):
     """Create a merge request from a fork into the target pamphlet."""
     target = db.query(PamphletModel).filter(PamphletModel.id == pamphlet_id).first()
-    source = db.query(PamphletModel).filter(PamphletModel.id == merge_request.source_pamphlet_id).first()
+    source = (
+        db.query(PamphletModel).filter(PamphletModel.id == merge_request.source_pamphlet_id).first()
+    )
     if not target or not source:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pamphlet not found")
     if source.author_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only fork author can create merge request")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only fork author can create merge request",
+        )
 
     fork = (
         db.query(PamphletForkModel)
@@ -132,7 +150,9 @@ def create_merge_request(
         .first()
     )
     if not fork:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source is not a fork of target")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Source is not a fork of target"
+        )
 
     open_request = (
         db.query(MergeRequestModel)
@@ -144,7 +164,9 @@ def create_merge_request(
         .first()
     )
     if open_request:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Open merge request already exists")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Open merge request already exists"
+        )
 
     db_request = MergeRequestModel(
         source_pamphlet_id=source.id,
@@ -159,7 +181,7 @@ def create_merge_request(
     return db_request
 
 
-@router.get("/pamphlets/{pamphlet_id}/merge-requests", response_model=List[MergeRequest])
+@router.get("/pamphlets/{pamphlet_id}/merge-requests", response_model=list[MergeRequest])
 def list_merge_requests(
     pamphlet_id: int,
     db: Session = Depends(get_db),
@@ -187,19 +209,29 @@ def approve_merge_request(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Approve a merge request and add source latest file as target new version."""
-    merge_request = db.query(MergeRequestModel).filter(MergeRequestModel.id == merge_request_id).first()
+    merge_request = (
+        db.query(MergeRequestModel).filter(MergeRequestModel.id == merge_request_id).first()
+    )
     if not merge_request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merge request not found")
     if merge_request.status != MergeRequestStatus.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Merge request already closed")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Merge request already closed"
+        )
 
-    target = db.query(PamphletModel).filter(PamphletModel.id == merge_request.target_pamphlet_id).first()
+    target = (
+        db.query(PamphletModel).filter(PamphletModel.id == merge_request.target_pamphlet_id).first()
+    )
     if not target or target.author_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only target author can approve")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only target author can approve"
+        )
 
     source_version = _latest_version(db, merge_request.source_pamphlet_id)
     if source_version is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Source pamphlet has no versions")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Source pamphlet has no versions"
+        )
 
     _create_version_from_existing(db, source_version, target.id, current_user.id)
     merge_request.status = MergeRequestStatus.APPROVED
@@ -219,15 +251,23 @@ def reject_merge_request(
     current_user: UserModel = Depends(get_current_user),
 ):
     """Reject a merge request."""
-    merge_request = db.query(MergeRequestModel).filter(MergeRequestModel.id == merge_request_id).first()
+    merge_request = (
+        db.query(MergeRequestModel).filter(MergeRequestModel.id == merge_request_id).first()
+    )
     if not merge_request:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merge request not found")
     if merge_request.status != MergeRequestStatus.PENDING:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Merge request already closed")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Merge request already closed"
+        )
 
-    target = db.query(PamphletModel).filter(PamphletModel.id == merge_request.target_pamphlet_id).first()
+    target = (
+        db.query(PamphletModel).filter(PamphletModel.id == merge_request.target_pamphlet_id).first()
+    )
     if not target or target.author_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only target author can reject")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only target author can reject"
+        )
 
     merge_request.status = MergeRequestStatus.REJECTED
     merge_request.reviewed_by = current_user.id

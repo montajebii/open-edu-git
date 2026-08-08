@@ -2,9 +2,10 @@
 Pamphlet service for OpenEdu Git.
 """
 
-from typing import Optional, List
 from uuid import UUID
+
 from sqlalchemy.orm import Session
+
 from ..db.models import Pamphlet, PamphletVersion
 from ..schemas.pamphlet import PamphletCreate, PamphletUpdate
 
@@ -32,17 +33,27 @@ class PamphletService:
         return db_pamphlet
 
     @staticmethod
-    def get_pamphlet_by_id(db: Session, pamphlet_id: UUID) -> Optional[Pamphlet]:
+    def get_pamphlet_by_id(db: Session, pamphlet_id: UUID) -> Pamphlet | None:
         """Get pamphlet by ID."""
         return db.query(Pamphlet).filter(Pamphlet.id == pamphlet_id).first()
 
     @staticmethod
-    def get_pamphlets_by_author(db: Session, author_id: UUID, skip: int = 0, limit: int = 100) -> List[Pamphlet]:
+    def get_pamphlets_by_author(
+        db: Session, author_id: UUID, skip: int = 0, limit: int = 100
+    ) -> list[Pamphlet]:
         """Get pamphlets by author."""
-        return db.query(Pamphlet).filter(Pamphlet.author_id == author_id).offset(skip).limit(limit).all()
+        return (
+            db.query(Pamphlet)
+            .filter(Pamphlet.author_id == author_id)
+            .offset(skip)
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
-    def update_pamphlet(db: Session, pamphlet_id: UUID, pamphlet_update: PamphletUpdate) -> Optional[Pamphlet]:
+    def update_pamphlet(
+        db: Session, pamphlet_id: UUID, pamphlet_update: PamphletUpdate
+    ) -> Pamphlet | None:
         """Update pamphlet."""
         db_pamphlet = PamphletService.get_pamphlet_by_id(db, pamphlet_id)
         if not db_pamphlet:
@@ -57,7 +68,14 @@ class PamphletService:
         return db_pamphlet
 
     @staticmethod
-    def create_pamphlet_version(db: Session, pamphlet_id: UUID, version_number: int, file_path: str, file_type: str, created_by: UUID) -> PamphletVersion:
+    def create_pamphlet_version(
+        db: Session,
+        pamphlet_id: UUID,
+        version_number: int,
+        file_path: str,
+        file_type: str,
+        created_by: UUID,
+    ) -> PamphletVersion:
         """Create a new version of a pamphlet."""
         db_version = PamphletVersion(
             pamphlet_id=pamphlet_id,

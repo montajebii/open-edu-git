@@ -2,18 +2,18 @@
 Pamphlet and PamphletVersion models for OpenEdu Git.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, JSON, Enum
-from sqlalchemy.sql import func
+from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
+
 from app.db.base import Base
-import enum
 
 
 class Pamphlet(Base):
     """Pamphlet model."""
-    
+
     __tablename__ = "pamphlets"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String(255), nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -26,7 +26,7 @@ class Pamphlet(Base):
     tags = Column(JSON, default=[])  # e.g., ["کنکوری", "مثال‌محور"]
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     author = relationship("User", backref="pamphlets")
     versions = relationship("PamphletVersion", backref="pamphlet", cascade="all, delete-orphan")
@@ -35,9 +35,9 @@ class Pamphlet(Base):
 
 class PamphletVersion(Base):
     """Pamphlet version model."""
-    
+
     __tablename__ = "pamphlet_versions"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     version_number = Column(Integer, nullable=False)  # e.g., 1, 2, 3
@@ -47,13 +47,14 @@ class PamphletVersion(Base):
     notes = Column(Text)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     author = relationship("User", backref="created_versions")
 
 
-class MergeRequestStatus(str, enum.Enum):
+class MergeRequestStatus(str, Enum):
     """Merge request status enum."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -61,15 +62,15 @@ class MergeRequestStatus(str, enum.Enum):
 
 class PamphletFork(Base):
     """Pamphlet fork model."""
-    
+
     __tablename__ = "pamphlet_forks"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     original_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     forked_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     new_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    
+
     # Relationships
     original = relationship("Pamphlet", foreign_keys=[original_pamphlet_id], backref="forks")
     forked_by_user = relationship("User", backref="forks")
@@ -78,9 +79,9 @@ class PamphletFork(Base):
 
 class MergeRequest(Base):
     """Merge request model."""
-    
+
     __tablename__ = "merge_requests"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     source_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     target_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
@@ -92,9 +93,13 @@ class MergeRequest(Base):
     review_note = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     reviewed_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Relationships
-    source = relationship("Pamphlet", foreign_keys=[source_pamphlet_id], backref="merge_requests_sent")
-    target = relationship("Pamphlet", foreign_keys=[target_pamphlet_id], backref="merge_requests_received")
+    source = relationship(
+        "Pamphlet", foreign_keys=[source_pamphlet_id], backref="merge_requests_sent"
+    )
+    target = relationship(
+        "Pamphlet", foreign_keys=[target_pamphlet_id], backref="merge_requests_received"
+    )
     creator = relationship("User", foreign_keys=[created_by], backref="merge_requests_created")
     reviewer = relationship("User", foreign_keys=[reviewed_by], backref="merge_requests_reviewed")

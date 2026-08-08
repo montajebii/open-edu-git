@@ -2,10 +2,10 @@
 Pydantic schemas for pamphlets.
 """
 
-from pydantic import BaseModel
-from typing import List, Optional
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
+
+from pydantic import BaseModel
 
 
 class PamphletBase(BaseModel):
@@ -13,10 +13,10 @@ class PamphletBase(BaseModel):
     grade: str
     subject: str
     chapter: str
-    method: Optional[str] = None
-    difficulty: Optional[str] = None
+    method: str | None = None
+    difficulty: str | None = None
     is_public: int = 1
-    tags: List[str] = []
+    tags: list[str] = []
 
 
 class PamphletCreate(PamphletBase):
@@ -35,7 +35,7 @@ class Pamphlet(PamphletBase):
 
 class PamphletVersionBase(BaseModel):
     version_number: str
-    notes: Optional[str] = None
+    notes: str | None = None
 
 
 class PamphletVersionCreate(PamphletVersionBase):
@@ -66,7 +66,7 @@ class PamphletFork(BaseModel):
         from_attributes = True
 
 
-class MergeRequestStatus(str, Enum):
+class MergeRequestStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -75,11 +75,11 @@ class MergeRequestStatus(str, Enum):
 class MergeRequestCreate(BaseModel):
     source_pamphlet_id: int
     title: str
-    description: Optional[str] = None
+    description: str | None = None
 
 
 class MergeRequestReview(BaseModel):
-    review_note: Optional[str] = None
+    review_note: str | None = None
 
 
 class MergeRequest(BaseModel):
@@ -88,12 +88,12 @@ class MergeRequest(BaseModel):
     target_pamphlet_id: int
     status: MergeRequestStatus
     created_by: int
-    reviewed_by: Optional[int] = None
+    reviewed_by: int | None = None
     title: str
-    description: Optional[str] = None
-    review_note: Optional[str] = None
+    description: str | None = None
+    review_note: str | None = None
     created_at: datetime
-    reviewed_at: Optional[datetime] = None
+    reviewed_at: datetime | None = None
 
     class Config:
         from_attributes = True

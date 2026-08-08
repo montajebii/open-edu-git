@@ -2,12 +2,13 @@
 User service for OpenEdu Git.
 """
 
-from typing import Optional
 from uuid import UUID
+
 from sqlalchemy.orm import Session
+
+from ..core.security import get_password_hash, verify_password
 from ..db.models import User
 from ..schemas.user import UserCreate, UserUpdate
-from ..core.security import get_password_hash, verify_password
 
 
 class UserService:
@@ -32,17 +33,17 @@ class UserService:
         return db_user
 
     @staticmethod
-    def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    def get_user_by_email(db: Session, email: str) -> User | None:
         """Get user by email."""
         return db.query(User).filter(User.email == email).first()
 
     @staticmethod
-    def get_user_by_id(db: Session, user_id: UUID) -> Optional[User]:
+    def get_user_by_id(db: Session, user_id: UUID) -> User | None:
         """Get user by ID."""
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
-    def update_user(db: Session, user_id: UUID, user_update: UserUpdate) -> Optional[User]:
+    def update_user(db: Session, user_id: UUID, user_update: UserUpdate) -> User | None:
         """Update user."""
         db_user = UserService.get_user_by_id(db, user_id)
         if not db_user:
@@ -57,7 +58,7 @@ class UserService:
         return db_user
 
     @staticmethod
-    def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
+    def authenticate_user(db: Session, email: str, password: str) -> User | None:
         """Authenticate user."""
         user = UserService.get_user_by_email(db, email)
         if not user or not verify_password(password, user.password_hash):

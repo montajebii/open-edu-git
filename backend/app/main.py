@@ -4,9 +4,10 @@ OpenEdu Git Backend - FastAPI Application
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api.v1 import api_router
-from ..core.config import settings
 
+from ..core.config import settings
+from .api.v1 import api_router
+from .api.v1.endpoints import fork, pamphlet, review
 
 app = FastAPI(
     title="OpenEdu Git API",
@@ -14,7 +15,7 @@ app = FastAPI(
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
-    openapi_url="/openapi.json"
+    openapi_url="/openapi.json",
 )
 
 # Set up CORS
@@ -28,8 +29,9 @@ app.add_middleware(
     expose_headers=["*"],  # Expose all headers for frontend
 )
 
+
 # Include API routers
-from .api.v1.endpoints import pamphlet, review, fork
+
 api_router.include_router(pamphlet.router, prefix="/pamphlets", tags=["pamphlets"])
 api_router.include_router(review.router, prefix="/reviews", tags=["reviews"])
 api_router.include_router(fork.router, tags=["forks"])

@@ -2,24 +2,22 @@
 Authentication endpoints for OpenEdu Git API v1.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Response
-from sqlalchemy.orm import Session
-from datetime import timedelta
 from typing import Annotated
 from uuid import UUID
 
-from ...core.config import settings
+from fastapi import APIRouter, Depends, HTTPException, Response, status
+from sqlalchemy.orm import Session
+
 from ...core.auth import (
+    clear_auth_cookies,
     create_access_token,
     create_refresh_token,
-    set_auth_cookies,
-    clear_auth_cookies,
     get_current_user,
+    set_auth_cookies,
 )
 from ...db.session import get_db
+from ...schemas.user import User, UserCreate
 from ...services.user import UserService
-from ...schemas.user import UserCreate, User
-
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -37,16 +35,16 @@ def register_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered",
         )
-    
+
     created_user = UserService.create_user(db, user=user)
-    
+
     # Generate tokens
     access_token = create_access_token(data={"sub": str(created_user.id)})
     refresh_token = create_refresh_token(data={"sub": str(created_user.id)})
-    
+
     # Set cookies
     set_auth_cookies(response, access_token, refresh_token)
-    
+
     return created_user
 
 
@@ -64,14 +62,14 @@ def login_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
         )
-    
+
     # Generate tokens
     access_token = create_access_token(data={"sub": str(user.id)})
     refresh_token = create_refresh_token(data={"sub": str(user.id)})
-    
+
     # Set cookies
     set_auth_cookies(response, access_token, refresh_token)
-    
+
     return {"message": "Login successful", "user_id": str(user.id)}
 
 
