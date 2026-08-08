@@ -47,6 +47,15 @@ package-dir = {"" = "."}
 [tool.ruff]
 line-length = 100
 target-version = "py311"
+exclude = [
+    ".git",
+    "__pycache__",
+    ".venv",
+    "venv",
+    "migrations",
+]
+
+[tool.ruff.lint]
 select = [
     "E",
     "W",
@@ -59,13 +68,6 @@ select = [
 ignore = [
     "E501",
     "B008",
-]
-exclude = [
-    ".git",
-    "__pycache__",
-    ".venv",
-    "venv",
-    "migrations",
 ]
 
 [tool.ruff.format]
