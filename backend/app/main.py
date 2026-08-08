@@ -2,10 +2,9 @@
 OpenEdu Git Backend - FastAPI Application
 """
 
+from app.core.config import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from app.core.config import settings
 from .api.v1 import api_router
 from .api.v1.endpoints import fork, pamphlet, review
 
