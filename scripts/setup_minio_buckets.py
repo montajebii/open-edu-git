@@ -16,8 +16,8 @@ MINIO_SECURE = os.getenv("MINIO_SECURE", "false").lower() == "true"
 
 # Buckets to create
 BUCKETS = [
-    "pamphlets",      # For storing pamphlet files
-    "avatars",        # For user profile pictures
+    "pamphlets",  # For storing pamphlet files
+    "avatars",  # For user profile pictures
     "video-courses",  # For future video courses (Phase 2)
 ]
 
@@ -28,11 +28,12 @@ def main():
         MINIO_ENDPOINT,
         access_key=MINIO_ACCESS_KEY,
         secret_key=MINIO_SECRET_KEY,
-        secure=MINIO_SECURE
+        secure=MINIO_SECURE,
     )
-    
+
     # Wait for MinIO to be ready
     import time
+
     for _ in range(10):
         try:
             client.list_buckets()
