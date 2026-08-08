@@ -29,9 +29,7 @@ class Pamphlet(Base):
 
     # Relationships
     author = relationship("User", backref="pamphlets")
-    versions = relationship(
-        "PamphletVersion", backref="pamphlet", cascade="all, delete-orphan"
-    )
+    versions = relationship("PamphletVersion", backref="pamphlet", cascade="all, delete-orphan")
     reviews = relationship("Review", backref="pamphlet", cascade="all, delete-orphan")
 
 
@@ -74,13 +72,9 @@ class PamphletFork(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    original = relationship(
-        "Pamphlet", foreign_keys=[original_pamphlet_id], backref="forks"
-    )
+    original = relationship("Pamphlet", foreign_keys=[original_pamphlet_id], backref="forks")
     forked_by_user = relationship("User", backref="forks")
-    new_pamphlet = relationship(
-        "Pamphlet", foreign_keys=[new_pamphlet_id], backref="forked_from"
-    )
+    new_pamphlet = relationship("Pamphlet", foreign_keys=[new_pamphlet_id], backref="forked_from")
 
 
 class MergeRequest(Base):
@@ -111,9 +105,5 @@ class MergeRequest(Base):
     target = relationship(
         "Pamphlet", foreign_keys=[target_pamphlet_id], backref="merge_requests_received"
     )
-    creator = relationship(
-        "User", foreign_keys=[created_by], backref="merge_requests_created"
-    )
-    reviewer = relationship(
-        "User", foreign_keys=[reviewed_by], backref="merge_requests_reviewed"
-    )
+    creator = relationship("User", foreign_keys=[created_by], backref="merge_requests_created")
+    reviewer = relationship("User", foreign_keys=[reviewed_by], backref="merge_requests_reviewed")
