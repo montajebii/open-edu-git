@@ -6,23 +6,24 @@ This is the canonical location for SQLAlchemy models. The
 """
 
 import uuid
-
 from enum import Enum
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     Column,
     DateTime,
-    Enum as SQLEnum,
     Float,
     ForeignKey,
     Integer,
-    JSON,
     String,
     Text,
+    Uuid,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import (
+    Enum as SQLEnum,
+)
 from sqlalchemy.orm import relationship
 
 from .base import Base
@@ -41,7 +42,7 @@ class User(Base):
 
     __tablename__ = "users"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     email = Column(String(255), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=False)
@@ -81,9 +82,9 @@ class Pamphlet(Base):
 
     __tablename__ = "pamphlets"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     title = Column(String(255), nullable=False)
-    author_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    author_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
     grade = Column(String(50), nullable=False)
     subject = Column(String(100), nullable=False)
     chapter = Column(String(100), nullable=False)
@@ -110,10 +111,14 @@ class Pamphlet(Base):
         "Fork", foreign_keys="Fork.new_pamphlet_id", back_populates="new_pamphlet"
     )
     merge_requests_created = relationship(
-        "MergeRequest", foreign_keys="MergeRequest.source_pamphlet_id", back_populates="source_pamphlet"
+        "MergeRequest",
+        foreign_keys="MergeRequest.source_pamphlet_id",
+        back_populates="source_pamphlet",
     )
     merge_requests_received = relationship(
-        "MergeRequest", foreign_keys="MergeRequest.target_pamphlet_id", back_populates="target_pamphlet"
+        "MergeRequest",
+        foreign_keys="MergeRequest.target_pamphlet_id",
+        back_populates="target_pamphlet",
     )
 
 
@@ -122,14 +127,14 @@ class PamphletVersion(Base):
 
     __tablename__ = "pamphlet_versions"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
     version_number = Column(Integer, nullable=False)
     file_path = Column(String(512), nullable=False)
     file_type = Column(String(50), nullable=False)
     file_size = Column(Integer, nullable=False)
     notes = Column(Text)
-    author_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    author_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     pdf_file_path = Column(String(512), nullable=True)
     pdf_file_type = Column(String(50), nullable=True)
@@ -144,9 +149,9 @@ class Review(Base):
 
     __tablename__ = "reviews"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
     rating = Column(Integer, nullable=False)
     comment = Column(Text)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -162,10 +167,10 @@ class Fork(Base):
 
     __tablename__ = "forks"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    original_pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
-    forked_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    new_pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    original_pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    forked_by = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    new_pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
@@ -179,16 +184,16 @@ class MergeRequest(Base):
 
     __tablename__ = "merge_requests"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    source_pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
-    target_pamphlet_id = Column(UUID(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    source_pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
+    target_pamphlet_id = Column(Uuid(as_uuid=True), ForeignKey("pamphlets.id"), nullable=False)
     status = Column(
         SQLEnum(MergeRequestStatus, values_callable=lambda x: [e.value for e in x]),
         default=MergeRequestStatus.PENDING,
         nullable=False,
     )
-    created_by = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    reviewed_by = Column(UUID(as_uuid=True), ForeignKey("users.id"))
+    created_by = Column(Uuid(as_uuid=True), ForeignKey("users.id"), nullable=False)
+    reviewed_by = Column(Uuid(as_uuid=True), ForeignKey("users.id"))
     title = Column(String(255), nullable=False)
     description = Column(Text)
     review_note = Column(Text)
