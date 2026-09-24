@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     MINIO_BUCKET_PAMPHLETS: str = "pamphlets"
     MINIO_BUCKET_AVATARS: str = "avatars"
 
+    # API
+    API_V1_STR: str = "/api/v1"
+
     # Auth
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     ALGORITHM: str = "HS256"

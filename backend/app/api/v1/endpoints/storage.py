@@ -9,15 +9,15 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from ...core.auth import get_current_user
-from ...db.session import get_db
-from ...services.storage import StorageService
+from app.core.security import get_current_user
+from app.db.session import get_db
+from app.services.storage import StorageService
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 
 
 @router.post("/upload/{bucket_name}")
-def upload_file(
+async def upload_file(
     bucket_name: str,
     file: Annotated[UploadFile, File(...)],
     current_user: Annotated[UUID, Depends(get_current_user)],
@@ -53,7 +53,7 @@ def upload_file(
 
 
 @router.get("/download/{bucket_name}/{object_name}")
-def download_file(
+async def download_file(
     bucket_name: str,
     object_name: str,
 ):
@@ -74,7 +74,7 @@ def download_file(
 
 
 @router.get("/presigned/{bucket_name}/{object_name}")
-def get_presigned_url(
+async def get_presigned_url(
     bucket_name: str,
     object_name: str,
     expires: int = 3600,

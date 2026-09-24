@@ -8,7 +8,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 
 from .api.v1 import api_router
-from .api.v1.endpoints import fork, pamphlet, review
 
 app = FastAPI(
     title="OpenEdu Git API",
@@ -30,13 +29,8 @@ app.add_middleware(
     expose_headers=["*"],  # Expose all headers for frontend
 )
 
-
 # Include API routers
-
-api_router.include_router(pamphlet.router, prefix="/pamphlets", tags=["pamphlets"])
-api_router.include_router(review.router, prefix="/reviews", tags=["reviews"])
-api_router.include_router(fork.router, tags=["forks"])
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

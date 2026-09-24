@@ -4,6 +4,7 @@ Pydantic schemas for pamphlets.
 
 from datetime import datetime
 from enum import StrEnum
+from uuid import UUID
 
 from pydantic import BaseModel
 
@@ -15,7 +16,7 @@ class PamphletBase(BaseModel):
     chapter: str
     method: str | None = None
     difficulty: str | None = None
-    is_public: int = 1
+    is_public: bool = True
     tags: list[str] = []
 
 
@@ -23,18 +24,31 @@ class PamphletCreate(PamphletBase):
     pass
 
 
+class PamphletUpdate(BaseModel):
+    title: str | None = None
+    grade: str | None = None
+    subject: str | None = None
+    chapter: str | None = None
+    method: str | None = None
+    difficulty: str | None = None
+    is_public: bool | None = None
+    tags: list[str] | None = None
+
+
 class Pamphlet(PamphletBase):
-    id: int
-    author_id: int
+    id: UUID
+    author_id: UUID
     created_at: datetime
-    updated_at: datetime
+    updated_at: datetime | None = None
+    # IP% field
+    original_author_ip_percentage: float = 100.0
 
     class Config:
         from_attributes = True
 
 
 class PamphletVersionBase(BaseModel):
-    version_number: str
+    version_number: int
     notes: str | None = None
 
 
@@ -43,12 +57,14 @@ class PamphletVersionCreate(PamphletVersionBase):
 
 
 class PamphletVersion(PamphletVersionBase):
-    id: int
-    pamphlet_id: int
+    id: UUID
+    pamphlet_id: UUID
     file_path: str
     file_type: str
     file_size: int
-    author_id: int
+    pdf_file_path: str | None = None
+    pdf_file_type: str | None = None
+    author_id: UUID
     created_at: datetime
 
     class Config:
@@ -56,10 +72,10 @@ class PamphletVersion(PamphletVersionBase):
 
 
 class PamphletFork(BaseModel):
-    id: int
-    original_pamphlet_id: int
-    forked_by: int
-    new_pamphlet_id: int
+    id: UUID
+    original_pamphlet_id: UUID
+    forked_by: UUID
+    new_pamphlet_id: UUID
     created_at: datetime
 
     class Config:
@@ -73,7 +89,7 @@ class MergeRequestStatus(StrEnum):
 
 
 class MergeRequestCreate(BaseModel):
-    source_pamphlet_id: int
+    source_pamphlet_id: UUID
     title: str
     description: str | None = None
 
@@ -83,16 +99,17 @@ class MergeRequestReview(BaseModel):
 
 
 class MergeRequest(BaseModel):
-    id: int
-    source_pamphlet_id: int
-    target_pamphlet_id: int
+    id: UUID
+    source_pamphlet_id: UUID
+    target_pamphlet_id: UUID
     status: MergeRequestStatus
-    created_by: int
-    reviewed_by: int | None = None
+    created_by: UUID
+    reviewed_by: UUID | None = None
     title: str
     description: str | None = None
     review_note: str | None = None
     created_at: datetime
+    updated_at: datetime | None = None
     reviewed_at: datetime | None = None
 
     class Config:

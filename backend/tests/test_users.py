@@ -3,6 +3,7 @@ Tests for user endpoints.
 """
 
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -46,14 +47,28 @@ def setup_database():
 
 
 @pytest.fixture
-def test_user(db):
+def db_session():
+    """Get a database session for fixtures."""
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+@pytest.fixture
+def test_user(db_session):
     """Create a test user."""
+    import uuid
+    unique_id = uuid.uuid4()
     user_data = UserCreate(
-        email="test@example.com",
+        email=f"{unique_id}@example.com",
         password="testpassword",
         full_name="Test User",
+        expertise_tags=[],
+        avatar_url=None,
     )
-    return UserService.create_user(db, user=user_data)
+    return UserService.create_user(db_session, user=user_data)
 
 
 def test_create_user():
@@ -79,13 +94,14 @@ def test_get_user(test_user):
 
 def test_update_user(test_user):
     """Test updating a user."""
+    update_data = {
+        "full_name": "Updated User",
+        "bio": "This is an updated bio",
+    }
     response = client.put(
         f"/api/v1/users/{test_user.id}",
-        json={
-            "full_name": "Updated User",
-            "bio": "This is an updated bio",
-        },
+        json=update_data,
     )
     assert response.status_code == 200
-    assert response.json()["full_name"] == "Updated User"
-    assert response.json()["bio"] == "This is an updated bio"
+    assert response.json()["full_name"] == update_data["full_name"]
+    assert response.json()["bio"] == update_data["bio"]

@@ -1,26 +1,12 @@
 """
 Review model for OpenEdu Git.
+
+This module re-exports the canonical Review model from app.db.models to maintain
+backward compatibility with existing imports.
 """
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, Text
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
+# Re-export canonical model from app.db.models
+from app.db.models import Review
 
-from app.db.base import Base
-
-
-class Review(Base):
-    """Review model for pamphlets."""
-
-    __tablename__ = "reviews"
-
-    id = Column(Integer, primary_key=True, index=True)
-    pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    rating = Column(Integer, nullable=False)  # 1-5
-    comment = Column(Text)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Relationships
-    user = relationship("User", backref="reviews")
+# Keep the module namespace clean
+__all__ = ["Review"]

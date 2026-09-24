@@ -1,26 +1,12 @@
 """
 User model for OpenEdu Git.
+
+This module re-exports the canonical User model from app.db.models to maintain
+backward compatibility with existing imports.
 """
 
-from sqlalchemy import Column, DateTime, Integer, String, Text
-from sqlalchemy.sql import func
+# Re-export canonical model from app.db.models
+from app.db.models import User
 
-from app.db.base import Base
-
-
-class User(Base):
-    """User model."""
-
-    __tablename__ = "users"
-
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), unique=True, index=True, nullable=False)
-    password_hash = Column(String(255), nullable=False)
-    full_name = Column(String(255), nullable=False)
-    title = Column(String(255))  # e.g., "ریاضی", "فیزیک", "برنامه‌نویس"
-    bio = Column(Text)
-    avatar_url = Column(String(255))  # URL to avatar in MinIO
-    is_active = Column(Integer, default=1)  # 1 = active, 0 = inactive
-    is_verified = Column(Integer, default=0)  # 1 = verified, 0 = not verified
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+# Keep the module namespace clean
+__all__ = ["User"]

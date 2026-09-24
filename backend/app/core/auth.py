@@ -3,7 +3,6 @@ Authentication utilities for OpenEdu Git.
 """
 
 from datetime import datetime, timedelta
-from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -13,9 +12,11 @@ from sqlalchemy.orm import Session
 from ..core.config import settings
 from ..db.session import get_db
 from ..services.user import UserService
+from ..db.models import User as UserModel
+
 
 # OAuth2 scheme for token authentication
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")
 
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -51,9 +52,9 @@ def decode_token(token: str) -> dict | None:
         return None
 
 
-async def get_current_user(
+def get_current_user(
     token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)
-) -> UUID:
+) -> UserModel:
     """Get the current user from a JWT token."""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -68,7 +69,7 @@ async def get_current_user(
     except JWTError:
         raise credentials_exception from None
 
-    user = UserService.get_user_by_id(db, user_id=UUID(user_id))
+    user = UserService.get_user_by_id(db, user_id=user_id)
     if user is None:
         raise credentials_exception
     return user

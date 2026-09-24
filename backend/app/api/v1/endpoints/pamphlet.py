@@ -6,7 +6,6 @@ import os
 import uuid
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -49,7 +48,7 @@ def create_pamphlet(
 
 @router.post("/{pamphlet_id}/versions", response_model=PamphletVersion)
 def create_pamphlet_version(
-    pamphlet_id: int,
+    pamphlet_id: uuid.UUID,
     version: PamphletVersionCreate,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
@@ -94,7 +93,7 @@ def create_pamphlet_version(
 
 
 @router.get("/{pamphlet_id}", response_model=Pamphlet)
-def get_pamphlet(pamphlet_id: int, db: Session = Depends(get_db)):
+def get_pamphlet(pamphlet_id: uuid.UUID, db: Session = Depends(get_db)):
     """Get a pamphlet by ID."""
     db_pamphlet = db.query(PamphletModel).filter(PamphletModel.id == pamphlet_id).first()
     if not db_pamphlet:
@@ -121,17 +120,13 @@ def list_pamphlets(
     if chapter:
         query = query.filter(PamphletModel.chapter == chapter)
 
-    # Full-text search
+    # Full-text search using the precomputed search_vector column
     if search:
-        search_vector = (
-            PamphletModel.title
-            + " "
-            + PamphletModel.subject
-            + " "
-            + PamphletModel.chapter
-            + " "
-            + func.array_to_string(PamphletModel.tags, " ")
+        from sqlalchemy import func
+        query = query.filter(
+            PamphletModel.search_vector.op("@@")(
+                func.plainto_tsquery("persian", search)
+            )
         )
-        query = query.filter(search_vector.op("@@")(func.plainto_tsquery("simple", search)))
 
     return query.all()

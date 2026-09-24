@@ -2,6 +2,8 @@
 Review endpoints for OpenEdu Git.
 """
 
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -17,7 +19,7 @@ router = APIRouter()
 
 @router.post("/pamphlets/{pamphlet_id}/reviews", response_model=Review)
 def create_review(
-    pamphlet_id: int,
+    pamphlet_id: UUID,
     review: ReviewCreate,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
@@ -55,6 +57,6 @@ def create_review(
 
 
 @router.get("/pamphlets/{pamphlet_id}/reviews", response_model=list[Review])
-def get_pamphlet_reviews(pamphlet_id: int, db: Session = Depends(get_db)):
+def get_pamphlet_reviews(pamphlet_id: UUID, db: Session = Depends(get_db)):
     """Get all reviews for a pamphlet."""
     return db.query(ReviewModel).filter(ReviewModel.pamphlet_id == pamphlet_id).all()

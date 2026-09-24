@@ -3,6 +3,7 @@ Pamphlet fork and merge request endpoints.
 """
 
 from datetime import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -11,17 +12,9 @@ from app.core.security import get_current_user
 from app.db.session import get_db
 from app.models.pamphlet import (
     MergeRequest as MergeRequestModel,
-)
-from app.models.pamphlet import (
     MergeRequestStatus,
-)
-from app.models.pamphlet import (
     Pamphlet as PamphletModel,
-)
-from app.models.pamphlet import (
     PamphletFork as PamphletForkModel,
-)
-from app.models.pamphlet import (
     PamphletVersion as PamphletVersionModel,
 )
 from app.models.user import User as UserModel
@@ -31,11 +24,12 @@ from app.schemas.pamphlet import (
     MergeRequestReview,
     PamphletFork,
 )
+from app.services.ip_calculation import IPCalculationService
 
 router = APIRouter()
 
 
-def _latest_version(db: Session, pamphlet_id: int) -> PamphletVersionModel | None:
+def _latest_version(db: Session, pamphlet_id: UUID) -> PamphletVersionModel | None:
     return (
         db.query(PamphletVersionModel)
         .filter(PamphletVersionModel.pamphlet_id == pamphlet_id)
@@ -47,8 +41,8 @@ def _latest_version(db: Session, pamphlet_id: int) -> PamphletVersionModel | Non
 def _create_version_from_existing(
     db: Session,
     source_version: PamphletVersionModel,
-    target_pamphlet_id: int,
-    author_id: int,
+    target_pamphlet_id: UUID,
+    author_id: UUID,
 ) -> PamphletVersionModel:
     latest_target = _latest_version(db, target_pamphlet_id)
     next_number = 1 if latest_target is None else latest_target.version_number + 1
@@ -71,14 +65,14 @@ def _create_version_from_existing(
     status_code=status.HTTP_201_CREATED,
 )
 def fork_pamphlet(
-    pamphlet_id: int,
+    pamphlet_id: UUID,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ):
     """Create a fork of a public pamphlet."""
     original = (
         db.query(PamphletModel)
-        .filter(PamphletModel.id == pamphlet_id, PamphletModel.is_public == 1)
+        .filter(PamphletModel.id == pamphlet_id, PamphletModel.is_public == True)
         .first()
     )
     if not original:
@@ -98,8 +92,9 @@ def fork_pamphlet(
         chapter=original.chapter,
         method=original.method,
         difficulty=original.difficulty,
-        is_public=1,
+        is_public=True,
         tags=original.tags,
+        original_author_ip_percentage=original.original_author_ip_percentage or 100.0,
     )
     db.add(forked_pamphlet)
     db.flush()
@@ -123,7 +118,7 @@ def fork_pamphlet(
     status_code=status.HTTP_201_CREATED,
 )
 def create_merge_request(
-    pamphlet_id: int,
+    pamphlet_id: UUID,
     merge_request: MergeRequestCreate,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
@@ -183,7 +178,7 @@ def create_merge_request(
 
 @router.get("/pamphlets/{pamphlet_id}/merge-requests", response_model=list[MergeRequest])
 def list_merge_requests(
-    pamphlet_id: int,
+    pamphlet_id: UUID,
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
 ):
@@ -203,7 +198,7 @@ def list_merge_requests(
 
 @router.post("/merge-requests/{merge_request_id}/approve", response_model=MergeRequest)
 def approve_merge_request(
-    merge_request_id: int,
+    merge_request_id: UUID,
     review: MergeRequestReview = MergeRequestReview(),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),
@@ -240,12 +235,16 @@ def approve_merge_request(
     merge_request.review_note = review.review_note
     db.commit()
     db.refresh(merge_request)
+
+    # Update IP percentages after approval
+    IPCalculationService.update_ip_after_merge(db, target.id, merge_request.created_by)
+
     return merge_request
 
 
 @router.post("/merge-requests/{merge_request_id}/reject", response_model=MergeRequest)
 def reject_merge_request(
-    merge_request_id: int,
+    merge_request_id: UUID,
     review: MergeRequestReview = MergeRequestReview(),
     db: Session = Depends(get_db),
     current_user: UserModel = Depends(get_current_user),

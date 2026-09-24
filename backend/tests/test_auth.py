@@ -3,6 +3,7 @@ Tests for authentication endpoints.
 """
 
 import pytest
+import uuid
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -46,14 +47,25 @@ def setup_database():
 
 
 @pytest.fixture
-def test_user(db):
+def test_user():
     """Create a test user."""
+    db = TestingSessionLocal()
+    unique_id = uuid.uuid4()
     user_data = UserCreate(
-        email="test@example.com",
+        email=f"{unique_id}@example.com",
         password="testpassword",
         full_name="Test User",
+        expertise_tags=[],
+        avatar_url=None,
     )
-    return UserService.create_user(db, user=user_data)
+    db_user = UserService.create_user(db, user=user_data)
+    db.close()
+    yield db_user
+    # Cleanup
+    db = TestingSessionLocal()
+    db.delete(db.query(UserModel := __import__("app.models.user", fromlist=["User"]).User).filter_by(id=db_user.id).one())
+    db.commit()
+    db.close()
 
 
 def test_register_user():
@@ -80,12 +92,13 @@ def test_login_user(test_user):
         },
     )
     assert response.status_code == 200
-    assert response.json()["message"] == "Login successful"
+    assert "access_token" in response.json()
+    assert "refresh_token" in response.json()
 
 
 def test_get_current_user(test_user):
-    """Test getting current user."""
-    # First login to get cookies
+    """Test getting current user via Authorization header."""
+    # First login to get tokens
     login_response = client.post(
         "/api/v1/auth/login",
         data={
@@ -94,11 +107,13 @@ def test_get_current_user(test_user):
         },
     )
     assert login_response.status_code == 200
+    tokens = login_response.json()
+    assert "access_token" in tokens
 
-    # Then get current user
+    # Then get current user using Bearer token
     response = client.get(
         "/api/v1/auth/me",
-        cookies=login_response.cookies,
+        headers={"Authorization": f"Bearer {tokens['access_token']}"},
     )
     assert response.status_code == 200
     assert response.json()["email"] == test_user.email
