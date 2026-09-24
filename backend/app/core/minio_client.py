@@ -7,6 +7,9 @@ or when MinIO is not available.
 
 from functools import cached_property
 
+from minio import Minio
+from minio.error import S3Error
+
 from app.core.config import settings
 
 
@@ -15,9 +18,6 @@ class MinioClient:
 
     @cached_property
     def client(self):
-        from minio import Minio
-        from minio.error import S3Error
-
         client = Minio(
             settings.MINIO_ENDPOINT,
             access_key=settings.MINIO_ACCESS_KEY,
@@ -34,9 +34,30 @@ class MinioClient:
             print(f"MinIO bucket setup failed: {e}")
         return client
 
-    def upload_fileobj(self, file_data, bucket_name, file_path):
-        """Upload a file object to MinIO."""
-        return self.client.upload_fileobj(file_data, bucket_name, file_path)
+    def upload_file(
+        self,
+        file_data,
+        bucket_name: str,
+        object_name: str,
+        length: int,
+        content_type: str = "application/octet-stream",
+    ):
+        """Upload an in-memory file to MinIO."""
+        self.client.put_object(
+            bucket_name=bucket_name,
+            object_name=object_name,
+            data=file_data,
+            length=length,
+            content_type=content_type,
+        )
+
+    def remove_file(self, bucket_name: str, object_name: str) -> bool:
+        """Delete an object from MinIO. Returns True on success."""
+        try:
+            self.client.remove_object(bucket_name, object_name)
+            return True
+        except S3Error:
+            return False
 
     def bucket_exists(self, bucket_name):
         """Check if a bucket exists."""
