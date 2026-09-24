@@ -27,7 +27,6 @@ class UserUpdate(BaseModel):
     bio: str | None = None
     expertise_tags: list[str] | None = None
     avatar_url: str | None = None
-    password: str | None = None
 
 
 class UserInDBBase(UserBase):
