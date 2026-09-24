@@ -1,6 +1,9 @@
 # Changelog
 
 ## [Unreleased]
+### Security
+- **Backend**: `PUT /api/v1/users/{id}` requires authentication and only allows the account owner to update their profile (was fully unauthenticated — IDOR). The unauthenticated `POST /api/v1/users/` duplicate registration route is removed; registration happens via `POST /api/v1/auth/register`. The dead `password` field is dropped from the profile-update schema (it was silently ignored by the service layer).
+
 ### Fixed
 - **Backend**: `PamphletVersion` upload pipeline (`POST /pamphlets/{id}/versions`) was broken three ways and could never succeed: non-existent `Minio.upload_fileobj` SDK call, JSON-body field mixed into a multipart endpoint (always 422), and use of the non-existent `UploadFile.size`. Metadata now arrives as form fields; uploads are validated (allowed extensions, non-empty, 50 MB cap), stored via `put_object` with a real length, and the stored object is removed if the DB write fails.
 - **Backend**: models now use SQLAlchemy 2.0 cross-dialect `Uuid` instead of the PostgreSQL-dialect type, so the SQLite-based test suite can create tables (7 tests went from collection errors to passing).
