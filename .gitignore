@@ -14,4 +14,23 @@ Thumbs.db
 .idea/
 
 *.log
-*.tmp.claude/
+*.tmp
+.claude/
+
+# Python artifacts
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Local test databases
+test.db
+*.sqlite3
+*.sqlite
+
+# AI tooling / agent-local artifacts (regenerable)
+.claude/
+.codex/
+.freebuff/
+graphify-out/
