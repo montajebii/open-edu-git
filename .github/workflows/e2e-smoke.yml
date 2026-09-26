@@ -1,0 +1,110 @@
+name: E2E Smoke
+
+on:
+    push:
+        branches: [main, develop]
+    pull_request:
+        branches: [main, develop]
+
+jobs:
+    e2e-smoke:
+        name: Build Docker images and run E2E smoke test
+        runs-on: ubuntu-latest
+
+        services:
+            postgres:
+                image: postgres:16
+                env:
+                    POSTGRES_USER: openedu
+                    POSTGRES_PASSWORD: openedu_password
+                    POSTGRES_DB: openedu_db
+                ports:
+                    - 5432:5432
+                options: >-
+                    --health-cmd pg_isready
+                    --health-interval 10s
+                    --health-timeout 5s
+                    --health-retries 5
+
+            minio:
+                image: bitnami/minio:latest
+                env:
+                    MINIO_ROOT_USER: minioadmin
+                    MINIO_ROOT_PASSWORD: minioadmin
+                ports:
+                    - 9000:9000
+
+        env:
+            E2E_BACKEND_IMAGE: openedu-e2e-backend
+            E2E_FRONTEND_IMAGE: openedu-e2e-frontend
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Build backend image
+              run: docker build -t "$E2E_BACKEND_IMAGE" ./backend
+
+            - name: Build frontend image
+              run: docker build -t "$E2E_FRONTEND_IMAGE" ./frontend
+
+            - name: Install MinIO client (mc)
+              run: |
+                  curl -fsSL -o /usr/local/bin/mc https://dl.min.io/client/mc/release/linux-amd64/mc
+                  chmod +x /usr/local/bin/mc
+
+            - name: Wait for MinIO
+              run: |
+                  for i in $(seq 1 30); do
+                      if curl -fsS http://localhost:9000/minio/health/ready > /dev/null; then
+                          echo "MinIO is ready"
+                          exit 0
+                      fi
+                      sleep 2
+                  done
+                  echo "MinIO did not become ready in time" >&2
+                  exit 1
+
+            - name: Start backend container against service network
+              run: |
+                  NET="$(docker network ls --format '{{.Name}}' | grep '^github_network_' | head -n 1)"
+                  echo "Service network: $NET"
+                  docker run -d --name openedu-e2e-backend \
+                      --network "$NET" \
+                      -p 8000:8000 \
+                      -e DATABASE_URL=postgresql://openedu:openedu_password@postgres:5432/openedu_db \
+                      -e SECRET_KEY=e2e-smoke-secret-key \
+                      -e MINIO_ENDPOINT=minio:9000 \
+                      -e MINIO_ACCESS_KEY=minioadmin \
+                      -e MINIO_SECRET_KEY=minioadmin \
+                      -e MINIO_SECURE=false \
+                      -e MINIO_BUCKET_PAMPHLETS=pamphlets \
+                      "$E2E_BACKEND_IMAGE" \
+                      uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+            - name: Wait for API
+              run: |
+                  for i in $(seq 1 30); do
+                      if curl -fsS http://localhost:8000/ > /dev/null; then
+                          echo "API is up"
+                          exit 0
+                      fi
+                      sleep 2
+                  done
+                  docker logs openedu-e2e-backend || true
+                  echo "API did not become ready in time" >&2
+                  exit 1
+
+            - name: Run E2E smoke test
+              env:
+                  API_URL: http://localhost:8000/api/v1
+                  MC_EXEC: mc
+                  MC_ENDPOINT: http://localhost:9000
+                  MINIO_ACCESS_KEY: minioadmin
+                  MINIO_SECRET_KEY: minioadmin
+                  SMOKE_BUCKET: pamphlets
+              run: bash scripts/e2e_smoke.sh
+
+            - name: Dump backend logs on failure
+              if: failure()
+              run: docker logs openedu-e2e-backend || true
