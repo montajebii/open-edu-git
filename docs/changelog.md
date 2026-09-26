@@ -1,6 +1,12 @@
 # Changelog
 
 ## [Unreleased]
+### Added
+- **CI**: `E2E Smoke` workflow builds both Docker images and runs `scripts/e2e_smoke.sh` against real PostgreSQL + MinIO service containers: register → login → create pamphlet → upload version → negative auth/validation checks → uploaded object verified byte-for-byte in MinIO via sha256.
+
+### Fixed
+- **Frontend**: Docker image now builds — `npm ci --only=production` omitted the devDependencies `next build` needs, the runner copied a non-existent `next.config.js`, and standalone output was referenced without `output: "standalone"` in `next.config.ts`.
+
 ### Security
 - **Backend**: `PUT /api/v1/users/{id}` requires authentication and only allows the account owner to update their profile (was fully unauthenticated — IDOR). The unauthenticated `POST /api/v1/users/` duplicate registration route is removed; registration happens via `POST /api/v1/auth/register`. The dead `password` field is dropped from the profile-update schema (it was silently ignored by the service layer).
 
