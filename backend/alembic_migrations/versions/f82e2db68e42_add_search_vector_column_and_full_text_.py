@@ -1,31 +1,32 @@
-"""Add search_vector column and full-text search setup, plus PDF columns to pamphlet_versions
+"""Install pamphlet full-text-search trigger
 
 Revision ID: f82e2db68e42
-Revises:
+Revises: 470ddd355943
 Create Date: 2026-09-03 02:44:45.676934
 
+This revision originally tried to add the ``pamphlets.search_vector``
+column itself (as ``sa.Text()`` — invalid for tsvector data and for the GIN
+index it created) and assumed the base tables already existed, which they
+never did. The baseline revision 470ddd355943 now creates the tables, the
+native TSVECTOR column and the GIN index; this revision only installs the
+Persian full-text-search trigger that keeps the column populated. The tags
+JSON column is indexed via ``tags::text`` (``array_to_string`` does not
+accept ``json`` input).
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 from alembic import op
-import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision: str = 'f82e2db68e42'
-down_revision: Union[str, Sequence[str], None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+revision: str = "f82e2db68e42"
+down_revision: str | Sequence[str] | None = "470ddd355943"
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    """Upgrade schema."""
-    # Add search_vector column to pamphlets
-    op.add_column('pamphlets', sa.Column('search_vector', sa.Text(), nullable=True))
-
-    # Create GIN index for full-text search
-    op.execute('CREATE INDEX idx_pamphlets_search_vector ON pamphlets USING GIN(search_vector)')
-
-    # Create trigger function to update search_vector
+    """Install the trigger function and trigger."""
     op.execute("""
         CREATE OR REPLACE FUNCTION update_pamphlet_search_vector()
         RETURNS TRIGGER AS $$
@@ -37,38 +38,20 @@ def upgrade() -> None:
                 to_tsvector('persian', COALESCE(NEW.chapter, '')) ||
                 to_tsvector('persian', COALESCE(NEW.method, '')) ||
                 to_tsvector('persian', COALESCE(NEW.difficulty, '')) ||
-                to_tsvector('simple', COALESCE(array_to_string(NEW.tags, ' '), ''));
+                to_tsvector('simple', COALESCE(NEW.tags::text, ''));
             RETURN NEW;
         END
         $$ LANGUAGE plpgsql;
     """)
 
-    # Create trigger
     op.execute("""
         CREATE TRIGGER trigger_pamphlet_search_vector
         BEFORE INSERT OR UPDATE ON pamphlets
         FOR EACH ROW EXECUTE FUNCTION update_pamphlet_search_vector();
     """)
 
-    # Add PDF columns to pamphlet_versions
-    op.add_column('pamphlet_versions', sa.Column('pdf_file_path', sa.Text(), nullable=True))
-    op.add_column('pamphlet_versions', sa.Column('pdf_file_type', sa.String(50), nullable=True))
-
 
 def downgrade() -> None:
-    """Downgrade schema."""
-    # Drop PDF columns from pamphlet_versions
-    op.drop_column('pamphlet_versions', 'pdf_file_type')
-    op.drop_column('pamphlet_versions', 'pdf_file_path')
-
-    # Drop trigger
-    op.execute('DROP TRIGGER IF EXISTS trigger_pamphlet_search_vector ON pamphlets')
-
-    # Drop trigger function
-    op.execute('DROP FUNCTION IF EXISTS update_pamphlet_search_vector()')
-
-    # Drop index
-    op.execute('DROP INDEX IF EXISTS idx_pamphlets_search_vector')
-
-    # Drop column
-    op.drop_column('pamphlets', 'search_vector')
+    """Remove the trigger and its function."""
+    op.execute("DROP TRIGGER IF EXISTS trigger_pamphlet_search_vector ON pamphlets")
+    op.execute("DROP FUNCTION IF EXISTS update_pamphlet_search_vector()")

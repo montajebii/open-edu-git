@@ -22,6 +22,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy project
 COPY . .
 
+# Apply database migrations on startup, then run the CMD
+ENTRYPOINT ["/app/entrypoint.sh"]
+
 # Expose port
 EXPOSE 8000
 

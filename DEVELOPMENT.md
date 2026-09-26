@@ -71,7 +71,7 @@ This command runs the `db` (PostgreSQL), `minio` (file storage), `redis` (cache 
   - `app/models/`: SQLAlchemy models (for PostgreSQL).
   - `app/schemas/`: Pydantic models (for data validation).
   - `main.py`: FastAPI application entry point.
-- **`migrations/`**: Database migration files (currently `init.sql`).
+- **`alembic_migrations/`**: Alembic migration scripts (schema is applied with `alembic upgrade head`; the container entrypoint runs it on startup).
 - **`scripts/`**: Utility scripts (e.g., `setup_minio_buckets.py`).
 - **`tests/`**: Test code for both frontend and backend.
 - **`latex-compiler/`**: Docker image for LaTeX compilation.
@@ -327,7 +327,7 @@ docker-compose exec backend python scripts/export_dataset.py --format json
 
 ### Database Migrations
 
-- Instead of `init.sql`, use database migration tools like Alembic (for Python/SQLAlchemy) to apply schema changes in a controlled and safe manner.
+- Schema is managed exclusively by Alembic (`backend/alembic_migrations/`). Apply pending migrations with `alembic upgrade head` (the backend container entrypoint does this automatically on startup); generate new revisions with `alembic revision --autogenerate` after changing the SQLAlchemy models.
 
 ### Monitoring & Logging
 

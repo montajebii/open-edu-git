@@ -7,7 +7,9 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://${POSTGRES_USER:-openedu}:${POSTGRES_PASSWORD:-openedu}@db:5432/${POSTGRES_DB:-openedu_db}"
+    # Compose injects DATABASE_URL per environment; this default targets a
+    # local dev stack (docker-compose port mapping).
+    DATABASE_URL: str = "postgresql://openedu:openedu@localhost:5432/openedu_db"
 
     # MinIO
     MINIO_ENDPOINT: str = "minio:9000"

@@ -25,8 +25,10 @@ from sqlalchemy import (
     Enum as SQLEnum,
 )
 from sqlalchemy.orm import relationship
+from sqlalchemy.schema import Index
 
 from .base import Base
+from .types import TSVector
 
 
 class MergeRequestStatus(str, Enum):
@@ -92,13 +94,21 @@ class Pamphlet(Base):
     difficulty = Column(String(50))
     is_public = Column(Boolean, default=True)
     tags = Column(JSON, default=[])
-    search_vector = Column(String(512))  # PostgreSQL tsvector for full-text search
+    search_vector = Column(TSVector)  # tsvector on PG; trigger-maintained for FTS
     # IP% represents the percentage of intellectual property from the original author
     # For directly authored pamphlets, this starts at 100.0
     # For forked pamphlets, it decreases as more contributors add content
     original_author_ip_percentage = Column(Float, default=100.0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+    __table_args__ = (
+        Index(
+            "ix_pamphlets_search_vector",
+            "search_vector",
+            postgresql_using="gin",
+        ),
+    )
 
     # Relationships
     author = relationship("User", back_populates="pamphlets")

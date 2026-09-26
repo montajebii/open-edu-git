@@ -1,6 +1,15 @@
 # Changelog
 
 ## [Unreleased]
+### Changed
+- **Backend**: the backend container now applies Alembic migrations on startup (`entrypoint.sh`): empty databases are migrated to head automatically, managed databases get pending revisions, and legacy pre-Alembic databases are left untouched with instructions (recreate, or `alembic stamp head`). The stale `backend/migrations/init.sql` bootstrap — integer PKs, missing `forks`/`merge_requests` — is removed; the schema comes exclusively from Alembic now.
+
+### Fixed
+- **Backend**: Alembic migrations could never run on a fresh database — the search_vector revision assumed base tables that nothing ever created. A proper baseline revision (`470ddd355943`) now creates all six tables with PostgreSQL-native types (`UUID`, `TSVECTOR`, native enum, GIN index on `search_vector`), the search revision installs only the Persian full-text trigger, and the IP%/credential revision is idempotent. Downgrade path verified.
+- **Backend**: the full-text trigger referenced a non-existent `persian` text-search configuration (PostgreSQL ships none) and used `array_to_string` on a JSON column — every pamphlet insert would have failed on a real database. The baseline now creates a `persian` configuration (copied from `simple`) and the trigger indexes `tags::text`; ORM inserts and `plainto_tsquery('persian', …)` search verified end-to-end.
+- **Backend**: `alembic/env.py` resolved the database URL from a stale hardcoded value; it now honors `DATABASE_URL` > app settings > `alembic.ini`. The `Settings.DATABASE_URL` default no longer contains literal `${POSTGRES_USER:-…}` shell text.
+- **Backend**: `pamphlets.search_vector` is now a cross-dialect `TSVector` type (native `TSVECTOR` on PostgreSQL, `TEXT` on SQLite for the test suite) with the GIN index declared on the model; an autogenerate consistency probe confirms migrations match the ORM exactly.
+
 ### Added
 - **CI**: `E2E Smoke` workflow builds both Docker images and runs `scripts/e2e_smoke.sh` against real PostgreSQL + MinIO service containers: register → login → create pamphlet → upload version → negative auth/validation checks → uploaded object verified byte-for-byte in MinIO via sha256.
 
