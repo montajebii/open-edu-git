@@ -12,6 +12,14 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function authHeaders(token?: string | null): Record<string, string> {
-  return token ? { Authorization: `Bearer ${token}` } : {};
+/**
+ * fetch wrapper: points at the API and always sends/receives the httpOnly
+ * auth cookies. Never put tokens in JavaScript — the backend sets them as
+ * httpOnly cookies on register/login/refresh.
+ */
+export function apiFetch(
+  path: string,
+  init: RequestInit = {}
+): Promise<Response> {
+  return fetch(apiUrl(path), { credentials: "include", ...init });
 }

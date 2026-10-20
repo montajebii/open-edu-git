@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 
 export default function RegisterPage() {
@@ -19,9 +19,9 @@ export default function RegisterPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+
     try {
-      const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+      const response = await apiFetch("/api/v1/auth/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,13 +34,19 @@ export default function RegisterPage() {
           bio,
         }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.detail || "Registration failed");
       }
-      
-      router.push("/login");
+
+      const user = await response.json();
+      if (user.is_verified) {
+        // Session cookies were set by the response.
+        router.push("/pamphlets");
+      } else {
+        router.push("/verify-email-sent");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

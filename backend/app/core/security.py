@@ -9,6 +9,7 @@ import logging
 import secrets
 import warnings
 from datetime import UTC, datetime, timedelta
+from uuid import uuid4
 
 from fastapi import Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer
@@ -18,6 +19,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.db.session import get_db
+from app.models.revoked_token import RevokedToken
 from app.models.user import User
 
 logger = logging.getLogger(__name__)
@@ -89,9 +91,13 @@ def create_access_token(subject: str, expires_delta: timedelta | None = None) ->
 
 
 def create_refresh_token(subject: str, expires_delta: timedelta | None = None) -> str:
-    """Create a long-lived refresh token for the given subject (user id)."""
+    """Create a long-lived refresh token for the given subject (user id).
+
+    Refresh tokens carry a ``jti`` so they can be revoked individually
+    (see :func:`revoke_refresh_token`).
+    """
     delta = expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-    return _create_token({"sub": subject}, TOKEN_TYPE_REFRESH, delta)
+    return _create_token({"sub": subject, "jti": uuid4().hex}, TOKEN_TYPE_REFRESH, delta)
 
 
 def decode_token(token: str, expected_type: str = TOKEN_TYPE_ACCESS) -> dict | None:
@@ -107,6 +113,38 @@ def decode_token(token: str, expected_type: str = TOKEN_TYPE_ACCESS) -> dict | N
     if payload.get("type") != expected_type:
         return None
     return payload
+
+
+def revoke_refresh_token(db: Session, payload: dict) -> None:
+    """Add a refresh token's ``jti`` to the denylist (idempotent)."""
+    jti = payload.get("jti")
+    exp = payload.get("exp")
+    user_id = _user_id_from_payload(payload)
+    if not jti or exp is None or user_id is None:
+        return
+    existing = db.query(RevokedToken).filter(RevokedToken.jti == str(jti)).first()
+    if existing:
+        return
+    db.add(
+        RevokedToken(
+            jti=str(jti),
+            user_id=user_id,
+            expires_at=datetime.fromtimestamp(exp, tz=UTC),
+        )
+    )
+    # Opportunistic cleanup: denylist entries past expiry can never match.
+    db.query(RevokedToken).filter(RevokedToken.expires_at < datetime.now(UTC)).delete()
+    db.commit()
+
+
+def is_refresh_token_revoked(db: Session, payload: dict) -> bool:
+    """True when the token's ``jti`` is on the denylist."""
+    jti = payload.get("jti")
+    if not jti:
+        # Tokens minted before revocation existed carry no jti; treat them as
+        # valid so a deploy does not log everyone out.
+        return False
+    return db.query(RevokedToken.id).filter(RevokedToken.jti == str(jti)).first() is not None
 
 
 def _user_id_from_payload(payload: dict) -> int | None:

@@ -1,6 +1,8 @@
 -- OpenEdu Git - initial schema (must stay in sync with app/models/*)
 
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
+-- NOTE: intentionally no CREATE EXTENSION. The search path uses ILIKE plus a
+-- tsvector column, neither of which needs contrib extensions; requiring
+-- pg_trgm made init.sql fail on managed Postgres instances.
 
 -- --------------------------------------------------------------------------
 -- Users
@@ -30,6 +32,19 @@ CREATE TABLE verification_tokens (
     expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- --------------------------------------------------------------------------
+-- Revoked refresh tokens (logout denylist)
+-- --------------------------------------------------------------------------
+CREATE TABLE revoked_tokens (
+    id SERIAL PRIMARY KEY,
+    jti VARCHAR(64) UNIQUE NOT NULL,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    revoked_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_revoked_tokens_jti ON revoked_tokens(jti);
 
 -- --------------------------------------------------------------------------
 -- Pamphlets

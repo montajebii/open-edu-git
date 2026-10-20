@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 
 export default function UploadPamphletPage() {
@@ -20,14 +20,14 @@ export default function UploadPamphletPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    if (!token) {
+    if (!user) {
       setError("لطفاً ابتدا وارد شوید.");
       setLoading(false);
       return;
@@ -35,11 +35,10 @@ export default function UploadPamphletPage() {
 
     try {
       // Step 1: Create pamphlet
-      const pamphletResponse = await fetch(`${API_BASE}/api/v1/pamphlets/`, {
+      const pamphletResponse = await apiFetch(`/api/v1/pamphlets/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
         },
         body: JSON.stringify({
           title,
@@ -67,13 +66,10 @@ export default function UploadPamphletPage() {
         formData.append("version_number", "1");
         if (notes) formData.append("notes", notes);
 
-        const versionResponse = await fetch(
-          `${API_BASE}/api/v1/pamphlets/${pamphletData.id}/versions`,
+        const versionResponse = await apiFetch(
+          `/api/v1/pamphlets/${pamphletData.id}/versions`,
           {
             method: "POST",
-            headers: {
-              "Authorization": `Bearer ${token}`,
-            },
             body: formData,
           }
         );

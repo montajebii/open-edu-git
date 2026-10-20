@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 interface Pamphlet {
   id: number;
@@ -43,12 +43,12 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   const [comment, setComment] = useState("");
   const [reviewError, setReviewError] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
-  const { token, tokenPayload } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchPamphlet = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/v1/pamphlets/${params.id}`);
+        const response = await apiFetch(`/api/v1/pamphlets/${params.id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch pamphlet");
         }
@@ -61,7 +61,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
 
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`);
+        const response = await apiFetch(`/api/v1/reviews/pamphlets/${params.id}/reviews`);
         if (!response.ok) {
           throw new Error("Failed to fetch reviews");
         }
@@ -80,7 +80,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!token) {
+    if (!user) {
       setReviewError("Please login to submit a review");
       return;
     }
@@ -88,13 +88,12 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
     setReviewError("");
 
     try {
-      const response = await fetch(
-        `${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`,
+      const response = await apiFetch(
+        `/api/v1/reviews/pamphlets/${params.id}/reviews`,
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({ rating, comment }),
         }
@@ -106,8 +105,8 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
       }
 
       // Refresh reviews
-      const reviewsResponse = await fetch(
-        `${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`
+      const reviewsResponse = await apiFetch(
+        `/api/v1/reviews/pamphlets/${params.id}/reviews`
       );
       if (reviewsResponse.ok) {
         const data = await reviewsResponse.json();
@@ -126,10 +125,9 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   if (error) return <div className="container mx-auto px-4 py-8 text-red-600">{error}</div>;
   if (!pamphlet) return <div className="container mx-auto px-4 py-8">Pamphlet not found</div>;
 
-  const currentUserId = tokenPayload?.sub ?? null;
   const hasReviewed =
-    currentUserId !== null &&
-    reviews.some((review) => String(review.user?.id ?? "") === String(currentUserId));
+    user !== null &&
+    reviews.some((review) => review.user?.id === user.id);
 
   const averageRating = reviews.length
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
@@ -185,7 +183,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
       </div>
 
       {/* Review Form */}
-      {!hasReviewed && token && (
+      {!hasReviewed && user && (
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-xl font-bold mb-4">Submit a Review</h2>
           {reviewError && <div className="bg-red-100 text-red-700 p-3 mb-4 rounded">{reviewError}</div>}

@@ -38,7 +38,7 @@ OpenEdu Git follows a modular, service-oriented architecture designed for scalab
 
 - **Backend API** (FastAPI/Python)
   - RESTful API design with OpenAPI 3.0 documentation
-  - Async/await for high concurrency
+  - Synchronous endpoints backed by sync SQLAlchemy sessions (async SQLAlchemy deferred — see DECISIONS #2)
   - Dependency injection for testability
   - Middleware for authentication, logging, error handling
   - Versioned endpoints (/api/v1/*)
@@ -48,7 +48,7 @@ OpenEdu Git follows a modular, service-oriented architecture designed for scalab
 - **Primary Database** (PostgreSQL 16)
   - ACID compliance for data integrity
   - JSONB for flexible metadata storage
-  - Full-text search capabilities (pg_trgm, tsvector)
+  - Full-text search capabilities (tsvector trigger; API filters use wildcard-escaped ILIKE)
   - Connection pooling for efficiency
 - **Object Storage** (MinIO/S3-compatible)
   - Immutable storage for handout files
@@ -535,10 +535,10 @@ graph TD
 ## Next Steps
 
 1. **API Contract Finalization**: Define exact endpoint specifications
-2. **Database Migration Strategy**: Implement Alembic for schema evolution
+2. **Database Migration Strategy**: adopt Alembic before the first staging deployment; until then `backend/migrations/init.sql` is the schema source of truth (validated against the models by `backend/scripts/validate_init_sql.py` — see DECISIONS #21)
 3. **Security Implementation**: Deploy authentication and authorization mechanisms
 4. **Performance Baseline**: Establish benchmarks for key operations
 5. **Documentation Updates**: Maintain living architecture documentation
 
 ---
-*Architecture Document v1.0 - Created 2026-08-03*
+*Architecture Document v1.0 - Created 2026-08-03. Corrected 2026-10-20 (search stack, migration strategy).*

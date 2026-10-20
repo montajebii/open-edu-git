@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [unverified, setUnverified] = useState(false);
+  const [resendState, setResendState] = useState<"idle" | "sending" | "sent">("idle");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
@@ -16,9 +18,11 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError("");
-    
+    setUnverified(false);
+
     try {
-      const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+      // Tokens come back as httpOnly cookies; nothing is stored in JS.
+      const response = await apiFetch("/api/v1/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -28,15 +32,16 @@ export default function LoginPage() {
           password: password,
         }),
       });
-      
+
       if (!response.ok) {
         const data = await response.json();
+        if (response.status === 403 && data.detail === "Email address is not verified") {
+          setUnverified(true);
+          return;
+        }
         throw new Error(data.detail || "Login failed");
       }
-      
-      const data = await response.json();
-      localStorage.setItem("access_token", data.access_token);
-      localStorage.setItem("refresh_token", data.refresh_token);
+
       router.push("/pamphlets");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
@@ -45,11 +50,37 @@ export default function LoginPage() {
     }
   };
 
+  const handleResend = async () => {
+    setResendState("sending");
+    try {
+      const response = await apiFetch("/api/v1/auth/resend-verification", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      setResendState(response.ok ? "sent" : "idle");
+    } catch {
+      setResendState("idle");
+    }
+  };
+
   return (
     <main className="min-h-screen flex items-center justify-center p-8">
       <div className="w-full max-w-md card">
         <h1>ورود</h1>
         {error && <div className="error">{error}</div>}
+        {unverified && (
+          <div className="error">
+            <p className="mb-2">ایمیل شما هنوز تأیید نشده است.</p>
+            {resendState === "sent" ? (
+              <p>ایمیل تأیید جدیدی ارسال شد. لطفاً صندوق ورودی خود را بررسی کنید.</p>
+            ) : (
+              <button type="button" onClick={handleResend} disabled={resendState === "sending"}>
+                {resendState === "sending" ? "در حال ارسال..." : "ارسال مجدد ایمیل تأیید"}
+              </button>
+            )}
+          </div>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email">ایمیل</label>

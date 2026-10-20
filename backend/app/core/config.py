@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     COOKIE_SAMESITE: str = "lax"
     PASSWORD_HASH_ROUNDS: int = 12
     REQUIRE_EMAIL_VERIFICATION: bool = False
+    VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
 
     # Uploads
     MAX_UPLOAD_MB: int = 25
@@ -46,11 +47,15 @@ class Settings(BaseSettings):
         "http://localhost:8000",
     ]
 
+    # Frontend origin (used to build verification links)
+    FRONTEND_URL: str = "http://localhost:3000"
+
     # Email (for verification)
     SMTP_SERVER: str = "smtp.example.com"
     SMTP_PORT: int = 587
     SMTP_USERNAME: str = "your-email@example.com"
     SMTP_PASSWORD: str = "your-email-password"
+    SMTP_TIMEOUT: int = 10
     EMAIL_FROM: str = "noreply@openedugit.ir"
 
     # Sentry

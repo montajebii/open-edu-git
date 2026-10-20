@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { API_BASE } from "@/lib/api";
+import { apiFetch } from "@/lib/api";
 
 interface Pamphlet {
   id: number;
@@ -26,7 +26,7 @@ export default function PamphletsPage() {
   const [grade, setGrade] = useState("");
   const [subject, setSubject] = useState("");
   const [chapter, setChapter] = useState("");
-  const { token } = useAuth();
+  const { user } = useAuth();
 
   useEffect(() => {
     const fetchPamphlets = async () => {
@@ -36,11 +36,8 @@ export default function PamphletsPage() {
         if (subject) params.append("subject", subject);
         if (chapter) params.append("chapter", chapter);
 
-        const response = await fetch(
-          `${API_BASE}/api/v1/pamphlets/?${params.toString()}`,
-          {
-            headers: token ? { Authorization: `Bearer ${token}` } : {},
-          }
+        const response = await apiFetch(
+          `/api/v1/pamphlets/?${params.toString()}`
         );
 
         if (!response.ok) {
@@ -57,7 +54,7 @@ export default function PamphletsPage() {
     };
 
     fetchPamphlets();
-  }, [grade, subject, chapter, token]);
+  }, [grade, subject, chapter, user?.id]);
 
   return (
     <div className="container mx-auto px-4 py-8">

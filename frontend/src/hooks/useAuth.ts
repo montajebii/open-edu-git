@@ -1,61 +1,58 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { apiFetch } from "@/lib/api";
 
-interface TokenPayload {
-  sub: string;
-  exp: number;
-  iat: number;
-  [key: string]: unknown;
+export interface SessionUser {
+  id: number;
+  email: string;
+  full_name: string;
+  is_verified: boolean;
 }
 
+/**
+ * Session state backed by the backend's httpOnly cookies.
+ *
+ * The server owns the tokens; this hook only asks who is logged in.
+ */
 export const useAuth = () => {
-  const [token, setToken] = useState<string | null>(null);
-  const [tokenPayload, setTokenPayload] = useState<TokenPayload | null>(null);
+  const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Use a timeout to avoid synchronous setState in effect
-    const initAuth = () => {
-      const accessToken = localStorage.getItem("access_token");
-      setToken(accessToken);
+    let cancelled = false;
 
-      if (accessToken) {
-        try {
-          const payload = JSON.parse(atob(accessToken.split('.')[1])) as TokenPayload;
-          setTokenPayload(payload);
-        } catch {
-          setTokenPayload(null);
+    const loadSession = async () => {
+      try {
+        const response = await apiFetch("/api/v1/auth/me");
+        if (!cancelled) {
+          setUser(response.ok ? ((await response.json()) as SessionUser) : null);
         }
+      } catch {
+        if (!cancelled) setUser(null);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-      setLoading(false);
     };
 
-    setTimeout(initAuth, 0);
+    loadSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const login = (accessToken: string, refreshToken: string) => {
-    localStorage.setItem("access_token", accessToken);
-    localStorage.setItem("refresh_token", refreshToken);
-    setToken(accessToken);
+  const logout = useCallback(async () => {
     try {
-      const payload = JSON.parse(atob(accessToken.split('.')[1])) as TokenPayload;
-      setTokenPayload(payload);
+      await apiFetch("/api/v1/auth/logout", { method: "POST" });
     } catch {
-      setTokenPayload(null);
+      // The cookies are cleared server-side; ignore network failures and
+      // drop the local session state either way.
     }
-    router.push("/pamphlets");
-  };
-
-  const logout = () => {
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("refresh_token");
-    setToken(null);
-    setTokenPayload(null);
+    setUser(null);
     router.push("/login");
-  };
+  }, [router]);
 
-  return { token, tokenPayload, loading, login, logout };
+  return { user, loading, logout };
 };

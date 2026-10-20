@@ -10,6 +10,7 @@ from .pamphlet import (
     PamphletVersion,
 )
 from .review import Review
+from .revoked_token import RevokedToken
 from .user import User
 from .verification_token import VerificationToken
 
@@ -21,5 +22,6 @@ __all__ = [
     "MergeRequest",
     "MergeRequestStatus",
     "Review",
+    "RevokedToken",
     "VerificationToken",
 ]

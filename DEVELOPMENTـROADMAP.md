@@ -13,7 +13,7 @@
 ### ۰.۱ محیط توسعه و ابزارها
 
 - [ ] راه‌اندازی `docker-compose.yml` با سرویس‌های:
-  - PostgreSQL 16 + pg_trgm
+  - PostgreSQL 16 (بدون pg_trgm — حذف شد، نگاه کنید DECISIONS #6)
   - MinIO (ذخیره‌سازی فایل)
   - Redis (برای کش / صف‌های آینده)
 - [ ] افزودن پوشهٔ `backend/` با ساختار اولیهٔ FastAPI
@@ -95,7 +95,7 @@
 **بک‌اند:**
 
 - [ ] ایجاد ایندکس `tsvector` روی فیلدهای `title` و احتمالاً محتوای متنی جزوه (در صورت ذخیرهٔ متن)
-- [ ] ایندکس `pg_trgm` برای جستجوی تقریبی (fuzzy)
+- [ ] ایندکس `tsvector` برای جستجو (ایندکس `pg_trgm` حذف شد — DECISIONS #6)
 - [ ] API `GET /search?q=...&grade=...&subject=...&method=...`
 - [ ] پیاده‌سازی pagination با cursor-based
 - [ ] (در این فاز Elasticsearch را پیاده‌سازی نمی‌کنیم، اما جایگزینی آن در آینده را آسان می‌سازیم)

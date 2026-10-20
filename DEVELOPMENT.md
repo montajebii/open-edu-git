@@ -327,7 +327,7 @@ docker-compose exec backend python scripts/export_dataset.py --format json
 
 ### Database Migrations
 
-- Instead of `init.sql`, use database migration tools like Alembic (for Python/SQLAlchemy) to apply schema changes in a controlled and safe manner.
+- Before the first staging deployment, adopt Alembic (for Python/SQLAlchemy). Until then `backend/migrations/init.sql` is the schema source of truth and `backend/scripts/validate_init_sql.py` checks it against the SQLAlchemy models (see DECISIONS #21).
 
 ### Monitoring & Logging
 
