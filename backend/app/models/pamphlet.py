@@ -2,7 +2,10 @@
 Pamphlet and PamphletVersion models for OpenEdu Git.
 """
 
-from sqlalchemy import JSON, Column, DateTime, Enum, ForeignKey, Integer, String, Text
+from enum import Enum
+
+from sqlalchemy import JSON, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -23,9 +26,9 @@ class Pamphlet(Base):
     method = Column(String(100))  # e.g., "مفهومی", "کنکوری", "حل مسئله"
     difficulty = Column(String(50))  # e.g., "آسان", "متوسط", "سخت"
     is_public = Column(Integer, default=1)  # 1 = public, 0 = private
-    tags = Column(JSON, default=[])  # e.g., ["کنکوری", "مثال‌محور"]
+    tags = Column(JSON, default=list)  # e.g., ["کنکوری", "مثال‌محور"]
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     # Relationships
     author = relationship("User", backref="pamphlets")
@@ -86,8 +89,13 @@ class MergeRequest(Base):
     source_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     target_pamphlet_id = Column(Integer, ForeignKey("pamphlets.id"), nullable=False)
     status = Column(
-        Enum(MergeRequestStatus, values_callable=lambda x: [e.value for e in x]),
+        SAEnum(
+            MergeRequestStatus,
+            name="merge_request_status",
+            values_callable=lambda enum: [member.value for member in enum],
+        ),
         default=MergeRequestStatus.PENDING,
+        server_default=MergeRequestStatus.PENDING.value,
         nullable=False,
     )
     created_by = Column(Integer, ForeignKey("users.id"), nullable=False)

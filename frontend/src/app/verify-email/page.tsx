@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 export default function VerifyEmailPage({
   searchParams,
@@ -22,7 +23,7 @@ export default function VerifyEmailPage({
     const verifyEmail = async () => {
       try {
         const response = await fetch(
-          `http://backend:8000/api/v1/auth/verify-email?token=${searchParams.token}`
+          `${API_BASE}/api/v1/auth/verify-email?token=${searchParams.token}`
         );
 
         if (!response.ok) {

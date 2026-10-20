@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
+import { API_BASE } from "@/lib/api";
 
 interface Pamphlet {
   id: number;
@@ -27,7 +28,7 @@ interface Review {
   rating: number;
   comment?: string;
   created_at: string;
-  user: {
+  user?: {
     id: number;
     full_name: string;
   };
@@ -47,7 +48,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   useEffect(() => {
     const fetchPamphlet = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/pamphlets/${params.id}`);
+        const response = await fetch(`${API_BASE}/api/v1/pamphlets/${params.id}`);
         if (!response.ok) {
           throw new Error("Failed to fetch pamphlet");
         }
@@ -60,7 +61,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
 
     const fetchReviews = async () => {
       try {
-        const response = await fetch(`http://localhost:8000/api/v1/reviews/pamphlets/${params.id}/reviews`);
+        const response = await fetch(`${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`);
         if (!response.ok) {
           throw new Error("Failed to fetch reviews");
         }
@@ -88,7 +89,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
 
     try {
       const response = await fetch(
-        `http://localhost:8000/api/v1/reviews/pamphlets/${params.id}/reviews`,
+        `${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`,
         {
           method: "POST",
           headers: {
@@ -106,7 +107,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
 
       // Refresh reviews
       const reviewsResponse = await fetch(
-        `http://localhost:8000/api/v1/reviews/pamphlets/${params.id}/reviews`
+        `${API_BASE}/api/v1/reviews/pamphlets/${params.id}/reviews`
       );
       if (reviewsResponse.ok) {
         const data = await reviewsResponse.json();
@@ -128,8 +129,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
   const currentUserId = tokenPayload?.sub ?? null;
   const hasReviewed =
     currentUserId !== null &&
-    typeof currentUserId === "string" &&
-    reviews.some((review) => typeof review.user?.id === "string" && review.user.id === currentUserId);
+    reviews.some((review) => String(review.user?.id ?? "") === String(currentUserId));
 
   const averageRating = reviews.length
     ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
@@ -152,10 +152,10 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
           <div>
             <p className="text-gray-600"><strong>Method:</strong> {pamphlet.method || "-"}</p>
             <p className="text-gray-600"><strong>Difficulty:</strong> {pamphlet.difficulty || "-"}</p>
-            <p className="text-gray-600"><strong>Tags:</strong> {pamphlet.tags.join(", ") || "-"}</p>
+            <p className="text-gray-600"><strong>Tags:</strong> {(pamphlet.tags ?? []).join(", ") || "-"}</p>
           </div>
         </div>
-        <p className="text-gray-600 mb-4"><strong>Author:</strong> {pamphlet.author.full_name}</p>
+        <p className="text-gray-600 mb-4"><strong>Author:</strong> {pamphlet.author?.full_name ?? "ناشناس"}</p>
         <p className="text-gray-600 mb-4"><strong>Average Rating:</strong> {averageRating}</p>
       </div>
 
@@ -170,7 +170,7 @@ export default function PamphletDetailPage({ params }: { params: { id: string } 
               <div key={review.id} className="border p-4 rounded">
                 <div className="flex justify-between items-start mb-2">
                   <div>
-                    <p className="font-medium">{review.user.full_name}</p>
+                    <p className="font-medium">{review.user?.full_name ?? "کاربر"}</p>
                     <p className="text-yellow-500">
                       {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
                     </p>

@@ -5,7 +5,17 @@ Pydantic schemas for pamphlets.
 from datetime import datetime
 from enum import StrEnum
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+
+class UserBrief(BaseModel):
+    """Minimal author information embedded in pamphlet/review responses."""
+
+    id: int
+    full_name: str
+
+    class Config:
+        from_attributes = True
 
 
 class PamphletBase(BaseModel):
@@ -16,7 +26,7 @@ class PamphletBase(BaseModel):
     method: str | None = None
     difficulty: str | None = None
     is_public: int = 1
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 
 class PamphletCreate(PamphletBase):
@@ -26,6 +36,7 @@ class PamphletCreate(PamphletBase):
 class Pamphlet(PamphletBase):
     id: int
     author_id: int
+    author: UserBrief | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -34,7 +45,7 @@ class Pamphlet(PamphletBase):
 
 
 class PamphletVersionBase(BaseModel):
-    version_number: str
+    version_number: int
     notes: str | None = None
 
 

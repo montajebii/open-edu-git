@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 
 export default function LoginPage() {
@@ -17,7 +18,7 @@ export default function LoginPage() {
     setError("");
     
     try {
-      const response = await fetch("http://localhost:8000/api/v1/auth/login", {
+      const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/x-www-form-urlencoded",
@@ -36,7 +37,7 @@ export default function LoginPage() {
       const data = await response.json();
       localStorage.setItem("access_token", data.access_token);
       localStorage.setItem("refresh_token", data.refresh_token);
-      router.push("/dashboard");
+      router.push("/pamphlets");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Login failed");
     } finally {

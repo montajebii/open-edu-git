@@ -2,12 +2,10 @@
 User service for OpenEdu Git.
 """
 
-from uuid import UUID
-
 from sqlalchemy.orm import Session
 
 from ..core.security import get_password_hash, verify_password
-from ..db.models import User
+from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
 
 
@@ -15,17 +13,15 @@ class UserService:
     """Service for user-related operations."""
 
     @staticmethod
-    def create_user(db: Session, user: UserCreate) -> User:
+    def create_user(db: Session, user: UserCreate, is_verified: bool = False) -> User:
         """Create a new user."""
-        hashed_password = get_password_hash(user.password)
         db_user = User(
             email=user.email,
-            password_hash=hashed_password,
+            password_hash=get_password_hash(user.password),
             full_name=user.full_name,
             title=user.title,
             bio=user.bio,
-            avatar_url=user.avatar_url,
-            expertise_tags=user.expertise_tags,
+            is_verified=1 if is_verified else 0,
         )
         db.add(db_user)
         db.commit()
@@ -38,18 +34,21 @@ class UserService:
         return db.query(User).filter(User.email == email).first()
 
     @staticmethod
-    def get_user_by_id(db: Session, user_id: UUID) -> User | None:
+    def get_user_by_id(db: Session, user_id: int) -> User | None:
         """Get user by ID."""
         return db.query(User).filter(User.id == user_id).first()
 
     @staticmethod
-    def update_user(db: Session, user_id: UUID, user_update: UserUpdate) -> User | None:
+    def update_user(db: Session, user_id: int, user_update: UserUpdate) -> User | None:
         """Update user."""
         db_user = UserService.get_user_by_id(db, user_id)
         if not db_user:
             return None
 
         update_data = user_update.model_dump(exclude_unset=True)
+        password = update_data.pop("password", None)
+        if password:
+            db_user.password_hash = get_password_hash(password)
         for field, value in update_data.items():
             setattr(db_user, field, value)
 

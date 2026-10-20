@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE } from "@/lib/api";
 
 interface Pamphlet {
   id: number;
@@ -36,7 +37,7 @@ export default function PamphletsPage() {
         if (chapter) params.append("chapter", chapter);
 
         const response = await fetch(
-          `http://localhost:8000/api/v1/pamphlets/?${params.toString()}`,
+          `${API_BASE}/api/v1/pamphlets/?${params.toString()}`,
           {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           }

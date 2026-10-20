@@ -6,6 +6,8 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
+from .pamphlet import UserBrief
+
 
 class ReviewBase(BaseModel):
     rating: int
@@ -20,6 +22,7 @@ class Review(ReviewBase):
     id: int
     pamphlet_id: int
     user_id: int
+    user: UserBrief | None = None
     created_at: datetime
     updated_at: datetime
 

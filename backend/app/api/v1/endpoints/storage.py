@@ -4,72 +4,58 @@ Storage endpoints for OpenEdu Git API v1.
 
 from io import BytesIO
 from typing import Annotated
-from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 
-from ...core.auth import get_current_user
-from ...db.session import get_db
-from ...services.storage import StorageService
+from ....core.security import get_current_user
+from ....db.session import get_db
+from ....models.user import User as UserModel
+from ....services.storage import StorageService
 
 router = APIRouter(prefix="/storage", tags=["storage"])
 
+ALLOWED_BUCKETS = ("pamphlets", "pamphlets-latex", "pamphlets-pdf", "avatars")
+
 
 @router.post("/upload/{bucket_name}")
-def upload_file(
+async def upload_file(
     bucket_name: str,
     file: Annotated[UploadFile, File(...)],
-    current_user: Annotated[UUID, Depends(get_current_user)],
+    current_user: UserModel = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Upload a file to MinIO storage."""
-    storage = StorageService()
-
-    # Validate bucket
-    if bucket_name not in ["pamphlets", "pamphlets-latex", "pamphlets-pdf", "avatars"]:
+    if bucket_name not in ALLOWED_BUCKETS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid bucket name",
         )
 
-    # Create bucket if not exists
-    storage.create_bucket_if_not_exists(bucket_name)
-
-    # Upload file
+    storage = StorageService()
     file_data = await file.read()
-    object_name = storage.upload_file(
-        bucket_name=bucket_name,
-        file_data=BytesIO(file_data),
-        file_name=file.filename,
-        content_type=file.content_type,
-    )
+    if not file_data:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty file")
+
+    try:
+        storage.create_bucket_if_not_exists(bucket_name)
+        object_name = storage.upload_file(
+            bucket_name=bucket_name,
+            file_data=BytesIO(file_data),
+            file_name=file.filename or "upload.bin",
+            content_type=file.content_type or "application/octet-stream",
+        )
+    except Exception as exc:  # noqa: BLE001 - surfaced as a 503 to the client
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Storage unavailable: {exc}",
+        ) from None
 
     return {
         "object_name": object_name,
         "bucket_name": bucket_name,
         "file_name": file.filename,
-    }
-
-
-@router.get("/download/{bucket_name}/{object_name}")
-def download_file(
-    bucket_name: str,
-    object_name: str,
-):
-    """Download a file from MinIO storage."""
-    storage = StorageService()
-    file_data = storage.download_file(bucket_name, object_name)
-
-    if not file_data:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found",
-        )
-
-    return {
-        "file_data": file_data,
-        "file_name": object_name,
+        "file_size": len(file_data),
     }
 
 
@@ -78,8 +64,12 @@ def get_presigned_url(
     bucket_name: str,
     object_name: str,
     expires: int = 3600,
+    current_user: UserModel = Depends(get_current_user),
 ):
     """Generate a presigned URL for temporary access."""
+    if bucket_name not in ALLOWED_BUCKETS:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid bucket name")
+
     storage = StorageService()
     url = storage.generate_presigned_url(bucket_name, object_name, expires)
     return {"url": url}

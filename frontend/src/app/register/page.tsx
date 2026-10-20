@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 
 export default function RegisterPage() {
@@ -20,7 +21,7 @@ export default function RegisterPage() {
     setError("");
     
     try {
-      const response = await fetch("http://localhost:8000/api/v1/auth/register", {
+      const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -39,7 +40,7 @@ export default function RegisterPage() {
         throw new Error(data.detail || "Registration failed");
       }
       
-      router.push("/verify-email-sent");
+      router.push("/login");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed");
     } finally {

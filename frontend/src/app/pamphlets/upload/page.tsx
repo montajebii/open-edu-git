@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
+import { API_BASE } from "@/lib/api";
 
 
 export default function UploadPamphletPage() {
@@ -34,7 +35,7 @@ export default function UploadPamphletPage() {
 
     try {
       // Step 1: Create pamphlet
-      const pamphletResponse = await fetch("http://localhost:8000/api/v1/pamphlets/", {
+      const pamphletResponse = await fetch(`${API_BASE}/api/v1/pamphlets/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -63,11 +64,11 @@ export default function UploadPamphletPage() {
       if (file) {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("version_number", "1.0");
-        formData.append("notes", notes);
+        formData.append("version_number", "1");
+        if (notes) formData.append("notes", notes);
 
         const versionResponse = await fetch(
-          `http://localhost:8000/api/v1/pamphlets/${pamphletData.id}/versions`,
+          `${API_BASE}/api/v1/pamphlets/${pamphletData.id}/versions`,
           {
             method: "POST",
             headers: {
